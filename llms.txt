@@ -1,0 +1,38 @@
+# BRC-20 | Bitcoin Universe Protocol Reference
+
+> Human docs: index.html
+> Field reference: reference.html
+> Network: Bitcoin
+> Classification: Ordinals fungible token experiment
+
+## Summary
+
+A compact JSON inscription convention for deploying, minting, and transferring fungible token balances through Ordinals-aware infrastructure.
+
+## State model
+
+Indexer-derived balances from JSON text inscriptions and their Ordinal transfers.
+
+## Lifecycle
+
+1. Deploy ticker
+2. Mint inscription
+3. Create transferable
+4. Send Ordinal
+
+## Operations
+
+- Deploy: Registers the ticker, maximum supply, optional mint limit, and optional precision.
+- Mint: Credits the first owner of a valid mint inscription, subject to remaining supply and limit.
+- Transfer: Reserves an amount in a transferable inscription. Sending that inscription settles the transfer.
+
+## Safety
+
+1. Treat the original BRC-20 specification as an experiment. Indexer interpretation and wallet support determine practical interoperability.
+2. Transfers are two-step. Do not send a transferable inscription until the expected amount is shown as transferable.
+3. Use an Ordinals-aware receiving and sending flow. Accidental UTXO selection can strand or mis-handle inscriptions.
+
+## Sources
+
+- BRC-20 experiment: https://docs.bitcoints.org/brc-20
+- Universe Inscribe: https://inscribe.bitcoinuniverse.io
