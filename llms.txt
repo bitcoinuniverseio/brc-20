@@ -1,38 +1,51 @@
-# BRC-20 | Bitcoin Universe Protocol Reference
+# BRC-20
 
-> Human docs: index.html
-> Field reference: reference.html
-> Network: Bitcoin
-> Classification: Ordinals fungible token experiment
+> Inscribed fungible tokens with a two-transaction transfer state machine.
 
-## Summary
+## Chain and carrier
 
-A compact JSON inscription convention for deploying, minting, and transferring fungible token balances through Ordinals-aware infrastructure.
+- Chain: Bitcoin
+- Carrier: Ordinal JSON inscription
+
+## Overview
+
+BRC-20 reads JSON text inscriptions as deploy, mint, and transfer events. A transfer is not settled when the JSON is inscribed: it becomes spendable only when that transferable inscription is sent to another owner.
 
 ## State model
 
-Indexer-derived balances from JSON text inscriptions and their Ordinal transfers.
+Balance state is indexed from inscription history. The transferable is an Ordinal, so wallet coin selection must keep it separate from fee inputs and unrelated inscriptions.
 
 ## Lifecycle
 
-1. Deploy ticker
-2. Mint inscription
-3. Create transferable
-4. Send Ordinal
+1. Deploy a ticker and immutable supply policy.
+2. Mint only while the supply and per-mint limit allow it.
+3. Inscribe a transfer to lock an amount into a transferable.
+4. Send that transferable inscription to the recipient to settle.
 
-## Operations
+## Rules
 
-- Deploy: Registers the ticker, maximum supply, optional mint limit, and optional precision.
-- Mint: Credits the first owner of a valid mint inscription, subject to remaining supply and limit.
-- Transfer: Reserves an amount in a transferable inscription. Sending that inscription settles the transfer.
+- The first valid deployment wins a ticker, case-insensitively.
+- Deploy requires p, op, tick, and max. lim and dec are optional.
+- The default decimal precision is 18, and a declared precision cannot exceed 18.
+- Creating a transfer does not credit the recipient. Sending the transferable does.
+- Sending a transferable to its current owner cancels it.
+- Block order decides conflicts, so preview state is not final before confirmation.
 
-## Safety
+## Field reference
 
-1. Treat the original BRC-20 specification as an experiment. Indexer interpretation and wallet support determine practical interoperability.
-2. Transfers are two-step. Do not send a transferable inscription until the expected amount is shown as transferable.
-3. Use an Ordinals-aware receiving and sending flow. Accidental UTXO selection can strand or mis-handle inscriptions.
+- p (string, required: yes): Literal protocol identifier: brc-20.
+- op (string, required: yes): deploy, mint, or transfer.
+- tick (string, required: yes): Original BRC-20 convention is four characters. Compare case-insensitively.
+- max (integer string, required: deploy): Maximum supply.
+- lim (integer string, required: no): Maximum amount accepted by one mint.
+- dec (integer string, required: no): 0 through 18. Defaults to 18.
+- amt (decimal string, required: mint / transfer): Positive amount compatible with the ticker precision.
 
-## Sources
+## Primary sources
 
-- BRC-20 experiment: https://docs.bitcoints.org/brc-20
-- Universe Inscribe: https://inscribe.bitcoinuniverse.io
+- BRC-20 documentation: https://docs.bitcoints.org/brc-20
+- Ordinals handbook: https://docs.ordinals.com/
+
+## Operational caution
+
+Use an indexer and wallet that agree on BRC-20 validity. The chain stores inscriptions, while balances are protocol interpretation.
