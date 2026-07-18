@@ -1,51 +1,56 @@
 # BRC-20
 
-> Inscribed fungible tokens with a two-transaction transfer state machine.
+> A primary-source Bitcoin Universe developer manual for BRC-20.
 
-## Chain and carrier
+## Protocol model
 
 - Chain: Bitcoin
-- Carrier: Ordinal JSON inscription
+- Carrier: JSON text inscription
+- Core operations: deploy, mint, transfer
+- State model: indexer-derived balance state
+- Transfer model: two transactions, create a transferable inscription then send it
 
-## Overview
+Deploy initializes a ticker policy and does not change balance. A valid mint credits only the first owner of its mint inscription. A valid transfer inscription reserves an amount from available balance. The first movement of that transfer inscription to another owner credits the recipient and settles the transfer.
 
-BRC-20 reads JSON text inscriptions as deploy, mint, and transfer events. A transfer is not settled when the JSON is inscribed: it becomes spendable only when that transferable inscription is sent to another owner.
+## Canonical payloads
 
-## State model
+Deploy:
 
-Balance state is indexed from inscription history. The transferable is an Ordinal, so wallet coin selection must keep it separate from fee inputs and unrelated inscriptions.
+    {"p":"brc-20","op":"deploy","tick":"ordi","max":"21000000","lim":"1000"}
 
-## Lifecycle
+Mint:
 
-1. Deploy a ticker and immutable supply policy.
-2. Mint only while the supply and per-mint limit allow it.
-3. Inscribe a transfer to lock an amount into a transferable.
-4. Send that transferable inscription to the recipient to settle.
+    {"p":"brc-20","op":"mint","tick":"ordi","amt":"1000"}
 
-## Rules
+Transfer inscription:
 
-- The first valid deployment wins a ticker, case-insensitively.
-- Deploy requires p, op, tick, and max. lim and dec are optional.
-- The default decimal precision is 18, and a declared precision cannot exceed 18.
-- Creating a transfer does not credit the recipient. Sending the transferable does.
-- Sending a transferable to its current owner cancels it.
-- Block order decides conflicts, so preview state is not final before confirmation.
+    {"p":"brc-20","op":"transfer","tick":"ordi","amt":"100"}
 
-## Field reference
+## Original rules
 
-- p (string, required: yes): Literal protocol identifier: brc-20.
-- op (string, required: yes): deploy, mint, or transfer.
-- tick (string, required: yes): Original BRC-20 convention is four characters. Compare case-insensitively.
-- max (integer string, required: deploy): Maximum supply.
-- lim (integer string, required: no): Maximum amount accepted by one mint.
-- dec (integer string, required: no): 0 through 18. Defaults to 18.
-- amt (decimal string, required: mint / transfer): Positive amount compatible with the ticker precision.
+- The first valid deployment claims the ticker. Tickers are case-insensitive.
+- The original standard describes a four-letter ticker.
+- max supply is limited to unsigned 64-bit range.
+- dec defaults to 18 and cannot exceed 18.
+- lim is an optional per-mint limit.
+- A mint may be partially accepted only up to remaining supply by the original rules.
+- Transfer amount must not exceed available balance when the transfer is inscribed.
+- Available balance equals overall balance minus valid active transfer inscription amounts.
+- Same-block event order is confirmation order.
+- Sending a transfer inscription to the current owner cancels the transferable and restores available balance.
+- A transfer inscription should be sent only to an Ordinals-compatible destination.
+
+## Reader agreement
+
+The wallet, builder, and indexer must agree on the transfer inscription and its first movement. The OPI indexer repository is an Apache-2.0 implementation reference that states it follows official BRC-20 protocol rules. It is not presented here as a new source of protocol consensus.
 
 ## Primary sources
 
-- BRC-20 documentation: https://docs.bitcoints.org/brc-20
-- Ordinals handbook: https://docs.ordinals.com/
+- Original docs: https://docs.bitcoints.org/brc-20
+- Original examples: https://docs.bitcoints.org/brc-20/brc-20-examples
+- OPI indexer: https://github.com/unisat-wallet/brc20-swap-indexer
+- Pinned implementation source: https://github.com/unisat-wallet/brc20-swap-indexer/blob/60565f3eb2ca9aa8fc1a787b3eab3a98d3bee1f1/modules/brc20_index/brc20_index.py
 
-## Operational caution
+## Asset provenance
 
-Use an indexer and wallet that agree on BRC-20 validity. The chain stores inscriptions, while balances are protocol interpretation.
+Official documentation icon, social image, and blue visual tokens are documented in ATTRIBUTION.md.
