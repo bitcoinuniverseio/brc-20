@@ -17,6 +17,8 @@
 html { scroll-behavior: smooth; }
 body {
   margin: 0;
+  max-width: 100%;
+  overflow-x: hidden;
   color: var(--brc-text);
   background:
     radial-gradient(55rem 35rem at 88% -8%, rgba(67, 183, 242, .22), transparent 65%),
@@ -39,9 +41,10 @@ a { color: inherit; }
 .top-action:hover { border-color: var(--brc-sky); color: var(--brc-sky); }
 
 .hero { display: grid; grid-template-columns: 1.04fr .96fr; align-items: center; gap: 52px; min-height: 620px; padding: 68px 0 78px; }
+.hero > * { min-width: 0; }
 .eyebrow { color: var(--brc-sky); text-transform: uppercase; font: 800 11px/1 var(--mono); letter-spacing: .12em; }
 h1, h2, h3, p { margin-top: 0; }
-h1 { margin: 18px 0 20px; font-size: clamp(65px, 9.4vw, 128px); line-height: .82; letter-spacing: -.1em; }
+h1 { margin: 18px 0 20px; font-size: clamp(58px, 7.3vw, 104px); line-height: .88; letter-spacing: -.085em; }
 h1 .blue { color: var(--brc-sky); }
 .lead { max-width: 650px; margin: 0; color: #c4d9e5; font-size: clamp(18px, 2vw, 23px); line-height: 1.38; }
 .tags, .hero-actions { display: flex; gap: 9px; flex-wrap: wrap; }
@@ -55,7 +58,7 @@ h1 .blue { color: var(--brc-sky); }
 .hero-art { position: relative; min-height: 430px; display: grid; place-items: center; }
 .hero-art::before { content: ""; position: absolute; width: 83%; aspect-ratio: 1; border: 1px solid rgba(67, 183, 242, .42); border-radius: 50%; box-shadow: 0 0 120px rgba(67, 183, 242, .25); }
 .hero-art::after { content: "ORDINAL JSON"; position: absolute; right: 0; top: 13%; color: var(--brc-sky); writing-mode: vertical-rl; letter-spacing: .14em; font: 800 11px/1 var(--mono); }
-.hero-art img { position: relative; width: min(100%, 460px); aspect-ratio: 1.32; object-fit: cover; border: 1px solid var(--brc-line); border-radius: 18px; background: #fff; box-shadow: 0 24px 66px rgba(0, 0, 0, .48); }
+.hero-art img { position: relative; width: min(100%, 520px); aspect-ratio: 1.9; object-fit: contain; border: 1px solid var(--brc-line); border-radius: 18px; background: #fff; box-shadow: 0 24px 66px rgba(0, 0, 0, .48); }
 .art-caption { position: absolute; left: 0; bottom: 18px; z-index: 2; padding: 8px 11px; border: 1px solid var(--brc-line); border-radius: 6px; background: var(--brc-panel); color: var(--brc-muted); font: 700 11px/1.35 var(--mono); }
 
 .rule { height: 1px; background: var(--brc-line); }
@@ -116,9 +119,11 @@ tr:last-child td { border-bottom: 0; }
   .topbar { flex-wrap: wrap; gap: 9px; padding: 12px 0; }
   .nav { order: 3; width: 100%; margin: 0; overflow: auto; }
   .top-action { margin-left: auto; }
-  .hero { min-height: 0; grid-template-columns: 1fr; gap: 8px; padding: 56px 0; }
+  .hero { min-height: 0; grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 56px 0; }
   .hero-art { min-height: 330px; }
-  h1 { font-size: clamp(65px, 18vw, 110px); }
+  h1 { font-size: clamp(50px, 13vw, 72px); overflow-wrap: anywhere; }
+  .hero-actions { align-items: flex-start; flex-direction: column; }
+  .button { max-width: 100%; text-align: center; }
   section { padding: 63px 0; }
   .section-heading { grid-template-columns: 1fr; gap: 15px; }
   .columns, .flow, .code-grid, .source-list { grid-template-columns: 1fr; }
