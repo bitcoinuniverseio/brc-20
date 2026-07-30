@@ -1,27 +1,25 @@
-# BRC-20 documentation
+# BRC-20
 
-Bitcoin Universe documentation for BRC-20, rebuilt from the original BRC-20 documentation and a source-linked BRC-20 indexer implementation.
+Text became tokens. Bitcoin became a canvas.
 
-## Documentation pages
+BRC-20 turned compact JSON inscriptions into one of Bitcoin's most recognizable fungible-asset movements. A ticker begins with deploy, grows through mint, and changes hands through transferable inscriptions.
 
-- [Overview](index.html): protocol state model, transfer lifecycle, and source-backed visual identity
-- [Reference](reference.html): canonical deploy, mint, and transfer payloads, fields, and available-balance logic
-- [Build and verify guide](guide.html): a user-safe transaction workflow and release checklist
-- [Attribution](ATTRIBUTION.md): official visual assets, colors, source links, and pinned implementation revision
+## Explore
 
-## What is covered
+- [Enter the BRC-20 story](https://bitcoinuniverse.github.io/brc-20/)
+- [Create with Bitcoin Universe](https://inscribe.bitcoinuniverse.io)
+- [Visit the original BRC-20 guide](https://docs.bitcoints.org/brc-20)
 
-BRC-20 is an inscription-driven balance protocol. Deploy defines a ticker policy. A successful mint credits the first owner of its inscription. A valid transfer inscription locks an amount from available balance, and that amount is credited to the receiver only when the transferable inscription moves for the first time.
+## The three moments
 
-The reference page uses canonical payloads from the original documentation and labels an OPI indexer excerpt as an implementation example. It includes protection against the most expensive mistakes: sending an inscription to an intermediary first, using overall balance instead of available balance, and assuming a transfer settles at inscription time.
+- **Deploy** gives a ticker its identity, supply, mint limit, and precision.
+- **Mint** brings units into a holder's balance through an inscription.
+- **Transfer** creates a transferable inscription whose first movement settles to the recipient.
 
-## Primary sources
+## Stay in control
 
-- [Original BRC-20 documentation](https://docs.bitcoints.org/brc-20)
-- [Original BRC-20 examples](https://docs.bitcoints.org/brc-20/brc-20-examples)
-- [OPI BRC-20 indexer](https://github.com/unisat-wallet/brc20-swap-indexer)
-- [Pinned OPI indexer source](https://github.com/unisat-wallet/brc20-swap-indexer/blob/60565f3eb2ca9aa8fc1a787b3eab3a98d3bee1f1/modules/brc20_index/brc20_index.py)
+BRC-20 balances depend on how inscriptions are interpreted and moved. Before signing, check the ticker, amount, available balance, inscription destination, recipient, and miner fee in an Ordinals-compatible wallet. A transfer is complete only after the transferable inscription reaches its intended recipient.
 
-## Scope
+## Visual credit
 
-This is a transaction-building aid. BRC-20 balances are protocol interpretation, so always validate the finalized inscription and follow the active indexer and wallet rules used by the system that will read it.
+The icon, hero artwork, and blue visual cues displayed on the site are credited to the [original BRC-20 documentation](https://docs.bitcoints.org/brc-20). Their use here celebrates the source and does not imply affiliation.
