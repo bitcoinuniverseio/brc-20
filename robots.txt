@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /brc-20/
+Disallow: /brc-20/404.html
+
+Sitemap: https://bitcoinuniverseio.github.io/brc-20/sitemap.xml

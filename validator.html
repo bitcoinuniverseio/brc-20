@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Payload validator | BRC-20</title>
+<meta name="description" content="Paste a BRC-20 inscription JSON payload and see every validity check explained: protocol tag, operation, ticker byte length, amount grammar, decimals, and the string-versus-number mistake. Runs entirely in your browser.">
+<link rel="canonical" href="https://bitcoinuniverseio.github.io/brc-20/validator.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="BRC-20 payload validator">
+<meta property="og:description" content="Check a BRC-20 inscription payload against the validity rules, check by check, entirely client-side.">
+<meta property="og:url" content="https://bitcoinuniverseio.github.io/brc-20/validator.html">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script>try{var t=localStorage.getItem('brc20-theme');if(t==='dark'||t==='light'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}</script>
+<link rel="stylesheet" href="ledger.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="masthead">
+  <div class="wrap">
+    <div class="masthead-row">
+      <div>
+        <a class="site-name" href="./">BRC-20<span class="folio"> ¶</span></a>
+        <p class="site-sub">A fungible token ledger written in Bitcoin inscriptions</p>
+      </div>
+      <div class="masthead-tools">
+        <div class="search" role="search">
+          <label class="sr-only" for="site-search">Search this site</label>
+          <input type="search" id="site-search" placeholder="Search ( / )" autocomplete="off" aria-expanded="false" aria-controls="search-results">
+          <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+        </div>
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false">Dark</button>
+      </div>
+    </div>
+    <nav class="site-nav" aria-label="Primary">
+      <ul>
+        <li><a href="./">Overview</a></li>
+        <li><a href="spec.html">Specification</a></li>
+        <li><a href="guide.html">Guide</a></li>
+        <li><a href="reference.html">Reference</a></li>
+        <li><a href="vectors.html">Test vectors</a></li>
+        <li><a href="validator.html" aria-current="page">Validator</a></li>
+        <li><a href="changelog.html">Changelog</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap">
+    <p class="kicker">Interactive tool</p>
+    <h1>Inscription payload validator</h1>
+    <p class="lede">Paste a BRC-20 inscription JSON payload. Every check is reported with the rule
+    that produced it and an explanation of what to change. The tool checks what can be decided
+    from the payload alone; conditions that depend on chain state are called out rather than
+    guessed at.</p>
+
+    <div class="note">
+      <span class="note-label">Privacy and scope</span>
+      <p>This runs entirely in your browser. Nothing you paste is transmitted, stored, or logged;
+      the page makes no network request while validating. Rules revision: this site's
+      specification <strong>1.0.0</strong> (classic BRC-20 plus the 5-byte self-mint extension),
+      Bitcoin <strong>mainnet</strong>. Programmable extensions are not checked.</p>
+    </div>
+
+    <noscript>
+      <div class="warn">
+        <span class="note-label">JavaScript required for this tool only</span>
+        <p>The validator needs JavaScript because it runs in your browser rather than on a server.
+        Every rule it applies is written out in the <a href="spec.html#rules">specification's
+        validity rules</a>, and worked examples of valid and invalid payloads are on the
+        <a href="vectors.html">test vectors</a> page. The rest of this site works without
+        JavaScript.</p>
+      </div>
+    </noscript>
+
+    <form id="validator-form" class="tool-form">
+      <p><label for="payload-input"><strong>Inscription JSON</strong></label></p>
+      <textarea id="payload-input" name="payload" spellcheck="false" autocomplete="off"
+        aria-describedby="payload-hint">{"p":"brc-20","op":"deploy","tick":"ordi","max":"21000000","lim":"1000"}</textarea>
+      <p id="payload-hint" class="sr-only">Paste one BRC-20 inscription JSON object, then select Check payload.</p>
+      <div class="tool-actions">
+        <button type="submit">Check payload</button>
+        <button type="button" class="secondary" data-example='{"p":"brc-20","op":"deploy","tick":"ordi","max":"21000000","lim":"1000"}'>Load valid deploy</button>
+        <button type="button" class="secondary" data-example='{"p":"brc-20","op":"mint","tick":"ordi","amt":"1000"}'>Load valid mint</button>
+        <button type="button" class="secondary" data-example='{"p":"brc-20","op":"transfer","tick":"ordi","amt":"100"}'>Load valid transfer</button>
+        <button type="button" class="secondary" data-example='{"p":"brc-20","op":"deploy","tick":"ordi","max":21000000,"lim":"1000"}'>Load number mistake</button>
+        <button type="button" class="secondary" data-example='{"p":"brc-20","op":"deploy","tick":"gamma","max":"1000"}'>Load ticker mistake</button>
+      </div>
+    </form>
+
+    <section aria-labelledby="results-heading">
+      <h2 id="results-heading">Result</h2>
+      <div id="validator-output" role="status" aria-live="polite">
+        <p>Select <strong>Check payload</strong> to validate the JSON above.</p>
+      </div>
+    </section>
+
+    <h2 id="what-it-checks">What this tool checks</h2>
+    <div class="table-scroll">
+      <table>
+        <caption>Payload checks</caption>
+        <thead><tr><th scope="col">Check</th><th scope="col">Rule</th></tr></thead>
+        <tbody>
+          <tr><td>Content parses as exactly one JSON object</td><td><a href="spec.html#r1">R1</a></td></tr>
+          <tr><td>Every value is a JSON string, not a number or boolean</td><td><a href="spec.html#r3">R3</a></td></tr>
+          <tr><td><code>p</code> is exactly <code>"brc-20"</code></td><td><a href="spec.html#r4">R4</a></td></tr>
+          <tr><td><code>op</code> is <code>deploy</code>, <code>mint</code>, or <code>transfer</code>, lowercase</td><td><a href="spec.html#r5">R5</a></td></tr>
+          <tr><td>Required fields present; unknown keys flagged as ignored</td><td><a href="spec.html#r6">R6</a></td></tr>
+          <tr><td>Ticker is 4 UTF-8 bytes, or 5 with <code>self_mint</code></td><td><a href="spec.html#r7">R7</a></td></tr>
+          <tr><td><code>max</code> positive, <code>lim</code> at most <code>max</code>, <code>dec</code> from 0 to 18, uint64 bound</td><td><a href="spec.html#r9">R9</a></td></tr>
+          <tr><td>Amount grammar and decimal places against <code>dec</code></td><td><a href="spec.html#r11">R11</a></td></tr>
+          <tr><td>Operation-appropriate fields for mint and transfer</td><td><a href="spec.html#r13">R13</a>, <a href="spec.html#r16">R16</a></td></tr>
+          <tr><td>Duplicate top-level keys</td><td><a href="spec.html#r1">R1</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="what-it-cannot">What it cannot check</h2>
+    <p>These depend on the chain, not the payload, and no offline tool can decide them:</p>
+    <ul>
+      <li>Whether the ticker is already deployed, and by whom (<a href="spec.html#r10">R10</a>,
+      <a href="spec.html#r12">R12</a>).</li>
+      <li>The deployed <code>lim</code>, <code>dec</code>, and remaining supply, so a mint's real
+      ceiling and decimal allowance are unknown here (<a href="spec.html#r13">R13</a>,
+      <a href="spec.html#r14">R14</a>).</li>
+      <li>The available balance backing a transfer inscription at confirmation
+      (<a href="spec.html#r16">R16</a>).</li>
+      <li>The inscription envelope itself: content type, cursed status, and first ownership
+      (<a href="spec.html#r2">R2</a>, <a href="spec.html#r24">R24</a>).</li>
+    </ul>
+    <p>A "well-formed" verdict means the payload is syntactically correct BRC-20. It does not
+    promise the operation will take effect.</p>
+  </div>
+</main>
+
+<footer class="colophon">
+  <div class="wrap">
+    <dl>
+      <dt>Owning repository</dt><dd><a href="https://github.com/bitcoinuniverseio/brc-20">bitcoinuniverseio/brc-20</a></dd>
+      <dt>Source path</dt><dd><code>/validator.html</code></dd>
+      <dt>Spec version</dt><dd>1.0.0</dd>
+      <dt>Lifecycle</dt><dd>Stable</dd>
+      <dt>Chain / network</dt><dd>Bitcoin mainnet</dd>
+      <dt>Last verified</dt><dd>2026-09-01</dd>
+    </dl>
+    <p><a href="https://github.com/bitcoinuniverseio/brc-20/edit/main/validator.html">Edit this page on GitHub</a> ·
+    Part of the <a href="https://docs.bitcoinuniverse.io">Bitcoin Universe documentation platform</a> ·
+    <a href="https://github.com/bitcoinuniverseio/brc-20/security/advisories/new">Report a security issue</a></p>
+  </div>
+</footer>
+<script src="site.js" defer></script>
+<script src="validator.js" defer></script>
+</body>
+</html>

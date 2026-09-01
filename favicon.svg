@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <title>BRC-20 ledger mark</title>
+  <rect x="1" y="1" width="30" height="30" rx="3" fill="#f7f1e3" stroke="#8f8264"/>
+  <line x1="6" y1="9" x2="26" y2="9" stroke="#2b2318" stroke-width="2.5"/>
+  <line x1="6" y1="15" x2="22" y2="15" stroke="#b07714" stroke-width="2"/>
+  <line x1="6" y1="20" x2="26" y2="20" stroke="#2b2318" stroke-width="1.5"/>
+  <line x1="6" y1="25" x2="18" y2="25" stroke="#2b2318" stroke-width="1.5"/>
+  <circle cx="25" cy="25" r="2.2" fill="#b07714"/>
+</svg>

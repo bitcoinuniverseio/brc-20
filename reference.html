@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reference | BRC-20</title>
+<meta name="description" content="BRC-20 reference: terminology, indexer semantics for confirmation, mempool and reorg, the cursed inscriptions caveat, fee and size considerations, limitations, security considerations, and an implementation checklist.">
+<link rel="canonical" href="https://bitcoinuniverseio.github.io/brc-20/reference.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="BRC-20 reference">
+<meta property="og:description" content="Terminology, indexer semantics, reorg handling, limitations, security considerations, and an implementation checklist for BRC-20.">
+<meta property="og:url" content="https://bitcoinuniverseio.github.io/brc-20/reference.html">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script>try{var t=localStorage.getItem('brc20-theme');if(t==='dark'||t==='light'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}</script>
+<link rel="stylesheet" href="ledger.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="masthead">
+  <div class="wrap">
+    <div class="masthead-row">
+      <div>
+        <a class="site-name" href="./">BRC-20<span class="folio"> ¶</span></a>
+        <p class="site-sub">A fungible token ledger written in Bitcoin inscriptions</p>
+      </div>
+      <div class="masthead-tools">
+        <div class="search" role="search">
+          <label class="sr-only" for="site-search">Search this site</label>
+          <input type="search" id="site-search" placeholder="Search ( / )" autocomplete="off" aria-expanded="false" aria-controls="search-results">
+          <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+        </div>
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false">Dark</button>
+      </div>
+    </div>
+    <nav class="site-nav" aria-label="Primary">
+      <ul>
+        <li><a href="./">Overview</a></li>
+        <li><a href="spec.html">Specification</a></li>
+        <li><a href="guide.html">Guide</a></li>
+        <li><a href="reference.html" aria-current="page">Reference</a></li>
+        <li><a href="vectors.html">Test vectors</a></li>
+        <li><a href="validator.html">Validator</a></li>
+        <li><a href="changelog.html">Changelog</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap">
+    <p class="kicker">Implementer reference</p>
+    <h1>Reference</h1>
+    <p class="lede">Terminology, indexer semantics, and the operational details that decide whether
+    two implementations agree. Everything here concerns replay behavior rather than payload
+    syntax; for payload rules see the <a href="spec.html">specification</a>.</p>
+
+    <h2 id="terminology">1. Terminology</h2>
+    <dl>
+      <dt>Inscription</dt>
+      <dd>Content committed in a Bitcoin taproot witness and bound to one satoshi under the
+      Ordinals numbering rules. The carrier for every BRC-20 operation.</dd>
+      <dt>Reveal transaction</dt>
+      <dd>The second transaction of an inscription pair, which exposes the witness content. Its
+      output holding the inscribed satoshi determines first ownership.</dd>
+      <dt>Operation</dt>
+      <dd>One BRC-20 JSON payload: <code>deploy</code>, <code>mint</code>, or
+      <code>transfer</code>.</dd>
+      <dt>Ticker</dt>
+      <dd>The 4-byte (or 5-byte self-mint) asset identifier, compared case-insensitively.</dd>
+      <dt>Available balance</dt>
+      <dd>Units an address can commit to a new transfer inscription.</dd>
+      <dt>Transferable balance</dt>
+      <dd>Units already reserved by unspent transfer inscriptions the address holds.</dd>
+      <dt>Overall balance</dt>
+      <dd>Available plus transferable. What the address economically owns.</dd>
+      <dt>Transfer inscription</dt>
+      <dd>A confirmed, valid <code>transfer</code> operation that has not yet been spent. A
+      one-use bearer instrument for its <code>amt</code>.</dd>
+      <dt>transfer-inscribe / transfer-transfer</dt>
+      <dd>The two events a transfer produces. Indexers that hash their event streams must commit
+      them separately; collapsing them into a single event breaks state comparison against other
+      implementations.</dd>
+      <dt>Atomic amount</dt>
+      <dd>An amount as an unscaled base-10 integer at the ticker's <code>dec</code>. The safe
+      internal representation; see <a href="#arithmetic">arithmetic</a>.</dd>
+      <dt>Checkpoint</dt>
+      <dd>The (height, block hash) pair a set of indexed results was computed at, together with
+      the height below which results are treated as final.</dd>
+      <dt>Cursed inscription</dt>
+      <dd>An inscription assigned a negative number by the Ordinals rules because of a malformed
+      or unusual envelope. Not a valid BRC-20 carrier (<a href="spec.html#r24">R24</a>).</dd>
+    </dl>
+
+    <h2 id="confirmation">2. Confirmation semantics</h2>
+    <p>Every BRC-20 validity decision is made <strong>at confirmation</strong>, against the
+    confirmed ledger as of that point (<a href="spec.html#r23">R23</a>). Two operations in the
+    same block apply in transaction order, so a mint can validly reference a deploy from earlier
+    in its own block.</p>
+    <p>The decision is permanent in one direction only. A transfer inscription that exceeded the
+    available balance when it confirmed is void forever, and topping up the address later does not
+    revive it (<a href="spec.html#r16">R16</a>). Conversely a valid reservation stays valid until
+    its inscription is spent, however the price or the balance moves afterwards.</p>
+    <div class="table-scroll">
+      <table>
+        <caption>What "confirmed" means for each surface</caption>
+        <thead><tr><th scope="col">Surface</th><th scope="col">Depth to treat as settled</th></tr></thead>
+        <tbody>
+          <tr><td>Protocol validity</td><td>1 block. The rules apply at the block containing the operation.</td></tr>
+          <tr><td>Display of a balance</td><td>1 block, with the reading's height shown so a reader can judge staleness.</td></tr>
+          <tr><td>Irreversible action (settlement, payout, credit)</td><td>Deeper, chosen by the operator. Below the finality depth, expect a reorg to change the answer.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>The Bitcoin Universe read model makes this explicit: an ingested batch carries a checkpoint
+    with <code>height</code>, <code>hash</code>, and <code>finalizedHeight</code>, and every
+    response reports the checkpoint it was computed at.</p>
+
+    <h2 id="mempool">3. Mempool semantics</h2>
+    <p>Unconfirmed BRC-20 operations are not protocol state. An indexer may surface them as
+    pending information, but it must not let them influence validity, because:</p>
+    <ul>
+      <li>Mempool contents differ between nodes, so pending-derived state is not reproducible.</li>
+      <li>A pending transaction can be replaced (RBF), evicted, or simply never mined.</li>
+      <li>Two conflicting pending mints for the last of a supply cannot both be honored, and the
+      block, not the mempool, decides which one is.</li>
+    </ul>
+    <p>Implementations that expose pending data should keep it in a separate lane from confirmed
+    state, never let a pending operation satisfy a precondition for another operation, and drop
+    pending entries when they disappear from the mempool.</p>
+    <div class="note">
+      <span class="note-label">Universe coverage</span>
+      <p>The Universe BRC-20 source publishes <code>partial</code> coverage precisely here:
+      confirmed BRC-20 history and holder state are indexed, and there is no exhaustive BRC-20
+      mempool feed with a stable pending lifecycle and disappearance handling. Pending operations
+      are modeled explicitly: an operation marked pending may not claim a block height, block
+      hash, or confirmation count.</p>
+    </div>
+
+    <h2 id="reorg">4. Reorg semantics</h2>
+    <p>A reorg removes blocks whose operations were already applied. Because BRC-20 state is a
+    pure replay of block-ordered operations, correctness under reorg reduces to one requirement:
+    <strong>the state after a reorg must equal a clean replay of the new chain</strong>.</p>
+
+    <figure>
+      <svg class="diagram" viewBox="0 0 680 260" role="img" aria-labelledby="reorg-title reorg-desc">
+        <title id="reorg-title">Reorg handling as reversing ledger postings</title>
+        <desc id="reorg-desc">A ledger where postings from blocks 900001 and 900002 are struck through and reversed after those blocks are orphaned, then the replacement blocks 900001-prime and 900002-prime are posted forward. A finalized line below the finality depth is marked immutable: any reorg that would cross it is refused rather than applied.</desc>
+        <line class="d-double" x1="20" y1="30" x2="660" y2="30"/>
+        <text class="d-label" x="20" y="20">Reversal and replay</text>
+
+        <text class="d-label" x="20" y="56">orphaned</text>
+        <text x="140" y="56">block 900001 · mint +1000</text>
+        <text x="140" y="80">block 900002 · transfer 250</text>
+        <line class="d-rule-soft" x1="140" y1="51" x2="420" y2="51"/>
+        <line class="d-rule-soft" x1="140" y1="75" x2="430" y2="75"/>
+        <text class="d-debit" x="470" y="56">reversed</text>
+        <text class="d-debit" x="470" y="80">reversed</text>
+
+        <line class="d-rule" x1="20" y1="98" x2="660" y2="98"/>
+
+        <text class="d-label" x="20" y="126">replayed</text>
+        <text x="140" y="126">block 900001' · mint +1000</text>
+        <text x="140" y="150">block 900002' · (transfer absent)</text>
+        <text class="d-credit" x="470" y="126">applied</text>
+        <text class="d-label" x="470" y="150">never happened</text>
+
+        <line class="d-rule" x1="20" y1="170" x2="660" y2="170"/>
+
+        <text class="d-label" x="20" y="198">finalized</text>
+        <text x="140" y="198">blocks at or below finalizedHeight</text>
+        <text class="d-accent" x="470" y="198">immutable</text>
+        <line class="d-double" x1="140" y1="210" x2="660" y2="210"/>
+        <text class="d-label" x="140" y="236">A reorg that would cross this line is refused, not applied.</text>
+      </svg>
+      <figcaption>Reversal restores the pre-block state exactly; replay then posts the new chain.
+      Below the finality depth, a crossing reorg is treated as an error condition.</figcaption>
+    </figure>
+
+    <p>Three details separate implementations that agree from ones that drift:</p>
+    <ol>
+      <li><strong>Reversal must be complete.</strong> Reverting a transfer must restore both the
+      sender's and the recipient's columns, and reverting a transfer-inscribe must return the
+      reservation to available. Leaving a dangling reservation is the classic bug.</li>
+      <li><strong>Dependencies must unwind together.</strong> If a deploy is reverted, every mint
+      and transfer that depended on it must be reverted too. A mint surviving without its deploy
+      is a corrupt ledger.</li>
+      <li><strong>Order is restored, not patched.</strong> After reversal, the new blocks apply in
+      their own order. Re-applying a subset of old events in place produces state no clean replay
+      would reach.</li>
+    </ol>
+    <div class="note">
+      <span class="note-label">Universe behavior</span>
+      <p>The Universe read model enforces these as hard invariants. A checkpoint may not move
+      <code>finalizedHeight</code> backward; a rewound or replaced tip must arrive with explicit
+      invalidations for every event that is no longer authoritative; invalidating an event below
+      the finalized height is refused outright; and an event left depending on an inactive
+      deployment fails the batch. Any violation rolls back the whole batch rather than applying
+      part of it. For BRC-20 marketplace evidence, settlement history is append-only: a reorg adds
+      a rollback observation rather than deleting the earlier one.</p>
+    </div>
+
+    <h2 id="cursed">5. The cursed inscriptions caveat</h2>
+    <p>Ordinals assigns negative inscription numbers to envelopes that were malformed or unusual
+    under earlier rules, and later ord releases changed which envelopes are cursed and how they
+    are numbered. BRC-20 does not treat cursed inscriptions as valid operations
+    (<a href="spec.html#r24">R24</a>), but the caveat for implementers is subtler than the rule:</p>
+    <ul>
+      <li>Whether a given inscription is cursed depends on the ord version and the height at which
+      the rules changed. An indexer that upgrades its Ordinals layer can silently change its BRC-20
+      answers for historical blocks.</li>
+      <li>Two indexers using different ord versions can therefore disagree about historical
+      balances while both correctly implementing the BRC-20 rules.</li>
+      <li>Pin the Ordinals implementation and version alongside the BRC-20 rules revision, and
+      treat an Ordinals upgrade as requiring a full reindex and a state comparison, not a rolling
+      restart.</li>
+    </ul>
+
+    <h2 id="arithmetic">6. Amounts and arithmetic</h2>
+    <ul>
+      <li>Parse the decimal string form exactly (<a href="spec.html#r11">R11</a>), then scale to an
+      integer at the ticker's <code>dec</code> and never leave integer arithmetic afterwards.
+      Floating point loses precision at 18 decimals and produces balances that do not reconcile.</li>
+      <li>Reject values above the uint64 maximum, 18446744073709551615
+      (<a href="spec.html#r9">R9</a>). Accumulated supply totals need more headroom than uint64,
+      so use arbitrary-precision or 128-bit integers for aggregates.</li>
+      <li>Trim trailing fractional zeros before counting decimal places: <code>"1.500"</code> has
+      one significant decimal place and is valid at <code>dec</code> of 1.</li>
+      <li>Compare amounts after scaling, never as strings.</li>
+    </ul>
+
+    <h2 id="fees">7. Fee and size considerations</h2>
+    <ul>
+      <li>A BRC-20 payload is 60 to 80 bytes of witness data. Witness bytes are discounted, so the
+      dominant costs are the two transactions themselves and the fee rate at the time.</li>
+      <li>Every operation costs a commit and a reveal transaction. A transfer therefore takes
+      three transactions end to end: commit, reveal, and the spend that settles it.</li>
+      <li>The inscribed satoshi normally travels in a small output, commonly 546 satoshis, which
+      must not be treated as dust to be swept.</li>
+      <li>An invalid operation costs exactly as much as a valid one. Validate before signing; the
+      <a href="validator.html">validator</a> on this site checks everything that can be checked
+      from the payload alone.</li>
+      <li>Mint-out races bid the fee market up and then produce worthless inscriptions for
+      everyone who lands after the supply is exhausted (<a href="spec.html#r14">R14</a>).</li>
+    </ul>
+
+    <h2 id="limitations">8. Limitations</h2>
+    <ul>
+      <li><strong>No consensus enforcement.</strong> Bitcoin validates none of this. Agreement
+      comes from indexers following the same rules, not from the chain.</li>
+      <li><strong>Indexer divergence is possible.</strong> Different rule revisions, ord versions,
+      or extension support produce different balances from the same blocks.</li>
+      <li><strong>Two-phase transfers are not atomic.</strong> There is no protocol-level swap.
+      Any trade needs a construction outside the protocol and outside its guarantees.</li>
+      <li><strong>No protocol-level offers or allowances.</strong> A transfer inscription is
+      concrete collateral; there is no standing bid or delegated spending authority.</li>
+      <li><strong>Ticker squatting and lookalikes.</strong> First is valid rewards speed, and the
+      4-byte space is small and full of visually similar Unicode.</li>
+      <li><strong>Irreversible economics.</strong> No upgrade path exists for a deployed ticker.</li>
+      <li><strong>Fungibility with a footnote.</strong> Balances are fungible, but the transfer
+      inscriptions carrying them are individual UTXOs subject to ordinary UTXO handling risks.</li>
+    </ul>
+
+    <h2 id="security">9. Security considerations</h2>
+    <dl>
+      <dt>Accidental spends of transfer inscriptions</dt>
+      <dd>The largest practical risk. Any wallet unaware of inscriptions can spend a transfer
+      inscription as change or fee, settling it against whoever receives it
+      (<a href="spec.html#r21">R21</a>). Keep inscriptions in inscription-aware wallets and never
+      consolidate UTXOs blindly.</dd>
+      <dt>Ticker impersonation</dt>
+      <dd>Compare ticker bytes, not rendered glyphs. Confirm the deploy inscription ID of the asset
+      you intend to trade.</dd>
+      <dt>Indexer trust</dt>
+      <dd>A balance is one indexer's opinion until you can reproduce it. For anything valuable,
+      check the reading's height and compare independent indexers.</dd>
+      <dt>Marketplace and custody flows</dt>
+      <dd>Protocol state alone does not prove a listing is safe. Sound listing evidence joins the
+      protocol position with an independent inscription inventory and an unspent-output check from
+      a separate authority, all pinned to the same checkpoint, because the seller keeps control of
+      the inscription UTXO after listing and can spend it.</dd>
+      <dt>Reorg exposure on irreversible actions</dt>
+      <dd>Bitcoin confirmation is necessary but not sufficient. An irreversible action should also
+      require that the protocol event is still applied at a checkpoint deep enough for the
+      operator's risk tolerance, and should re-verify after a reorg.</dd>
+      <dt>Replayed or malformed payloads</dt>
+      <dd>Parse defensively: bound input size, reject duplicate keys, and treat unknown keys as
+      ignorable rather than as a reason to guess at intent.</dd>
+    </dl>
+
+    <h2 id="checklist">10. Implementation checklist</h2>
+    <ol class="rules">
+      <li>Track inscriptions with a pinned Ordinals implementation and version; record both
+      alongside your BRC-20 rules revision.</li>
+      <li>Filter carriers: accepted content types (<a href="spec.html#r2">R2</a>), not cursed
+      (<a href="spec.html#r24">R24</a>).</li>
+      <li>Parse strictly: one JSON object, all values strings, exact <code>p</code> and
+      <code>op</code> (<a href="spec.html#r1">R1</a> to <a href="spec.html#r5">R5</a>).</li>
+      <li>Measure tickers in UTF-8 bytes; lowercase for identity and keep display casing
+      (<a href="spec.html#r7">R7</a>, <a href="spec.html#r8">R8</a>).</li>
+      <li>Apply first-is-valid for deploys and treat deploy economics as immutable
+      (<a href="spec.html#r10">R10</a>).</li>
+      <li>Scale amounts to integers at <code>dec</code>; keep every operation in integer
+      arithmetic.</li>
+      <li>Enforce <code>lim</code>, then the supply remainder rule on the last mint
+      (<a href="spec.html#r14">R14</a>).</li>
+      <li>Attribute mints to the first owner of the mint inscription
+      (<a href="spec.html#r15">R15</a>).</li>
+      <li>Model available and transferable balances separately per address and ticker.</li>
+      <li>Emit transfer-inscribe and transfer-transfer as two ordered events; make transfer
+      inscriptions one-use (<a href="spec.html#r18">R18</a>).</li>
+      <li>Classify the first spend as recipient, self, or fee and post the matching entries
+      (<a href="spec.html#r19">R19</a> to <a href="spec.html#r21">R21</a>).</li>
+      <li>Key balances by output script and apply operations in strict block and transaction order
+      (<a href="spec.html#r22">R22</a>).</li>
+      <li>Keep pending state in a separate lane from confirmed state; never let it satisfy a
+      precondition.</li>
+      <li>Implement reorg reversal that fully unwinds dependent events, and refuse reorgs that
+      cross your finality depth.</li>
+      <li>Report a checkpoint (height, hash, finalized height) with every answer so callers can
+      judge freshness.</li>
+      <li>Verify against the <a href="vectors.html">test vectors</a>, then against an independent
+      indexer over a real block range before trusting the output.</li>
+    </ol>
+  </div>
+</main>
+
+<footer class="colophon">
+  <div class="wrap">
+    <dl>
+      <dt>Owning repository</dt><dd><a href="https://github.com/bitcoinuniverseio/brc-20">bitcoinuniverseio/brc-20</a></dd>
+      <dt>Source path</dt><dd><code>/reference.html</code></dd>
+      <dt>Spec version</dt><dd>1.0.0</dd>
+      <dt>Lifecycle</dt><dd>Stable</dd>
+      <dt>Chain / network</dt><dd>Bitcoin mainnet</dd>
+      <dt>Last verified</dt><dd>2026-09-01</dd>
+    </dl>
+    <p><a href="https://github.com/bitcoinuniverseio/brc-20/edit/main/reference.html">Edit this page on GitHub</a> ·
+    Part of the <a href="https://docs.bitcoinuniverse.io">Bitcoin Universe documentation platform</a> ·
+    <a href="https://github.com/bitcoinuniverseio/brc-20/security/advisories/new">Report a security issue</a></p>
+  </div>
+</footer>
+<script src="site.js" defer></script>
+</body>
+</html>
