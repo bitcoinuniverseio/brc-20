@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Test vectors | BRC-20</title>
+<meta name="description" content="BRC-20 test vectors: valid and invalid inscription payloads with expected outcomes and rule references, plus ledger state vectors for first-is-valid, the mint remainder rule, two-phase transfers, and reorg reversal.">
+<link rel="canonical" href="https://bitcoinuniverseio.github.io/brc-20/vectors.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="BRC-20 test vectors">
+<meta property="og:description" content="Valid and invalid payloads with expected outcomes, and ledger state vectors for conformance testing.">
+<meta property="og:url" content="https://bitcoinuniverseio.github.io/brc-20/vectors.html">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script>try{var t=localStorage.getItem('brc20-theme');if(t==='dark'||t==='light'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}</script>
+<link rel="stylesheet" href="ledger.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="masthead">
+  <div class="wrap">
+    <div class="masthead-row">
+      <div>
+        <a class="site-name" href="./">BRC-20<span class="folio"> ¶</span></a>
+        <p class="site-sub">A fungible token ledger written in Bitcoin inscriptions</p>
+      </div>
+      <div class="masthead-tools">
+        <div class="search" role="search">
+          <label class="sr-only" for="site-search">Search this site</label>
+          <input type="search" id="site-search" placeholder="Search ( / )" autocomplete="off" aria-expanded="false" aria-controls="search-results">
+          <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+        </div>
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false">Dark</button>
+      </div>
+    </div>
+    <nav class="site-nav" aria-label="Primary">
+      <ul>
+        <li><a href="./">Overview</a></li>
+        <li><a href="spec.html">Specification</a></li>
+        <li><a href="guide.html">Guide</a></li>
+        <li><a href="reference.html">Reference</a></li>
+        <li><a href="vectors.html" aria-current="page">Test vectors</a></li>
+        <li><a href="validator.html">Validator</a></li>
+        <li><a href="changelog.html">Changelog</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap">
+    <p class="kicker">Conformance</p>
+    <h1>Test vectors</h1>
+    <p class="lede">Two sets. <a href="#payload">Payload vectors</a> are decided from the JSON
+    alone, so a parser can be tested against them with no chain state. <a href="#ledger">Ledger
+    vectors</a> are sequences of operations with the exact resulting balances, which is where
+    implementations actually diverge. Every expected outcome cites the rule that produces it.</p>
+
+    <div class="note">
+      <span class="note-label">How to use these</span>
+      <p>Paste any payload vector into the <a href="validator.html">validator</a> to see the same
+      verdict rendered check by check. The ledger vectors are stated as postings so they can be
+      compared against an indexer's own event stream. Addresses are written as
+      <code>A</code>, <code>B</code>, and <code>C</code> to keep the arithmetic readable; a real
+      implementation keys balances by output script (<a href="spec.html#r22">R22</a>).</p>
+    </div>
+
+    <h2 id="payload">1. Payload vectors</h2>
+    <p>Each vector is decided by payload rules only. "Valid" here means the payload is
+    well-formed; whether it takes effect still depends on chain state, which the ledger vectors
+    cover.</p>
+
+    <h3 id="payload-valid">1.1 Valid payloads</h3>
+
+    <div class="vector">
+      <div class="vector-head"><strong>V1 · deploy, classic</strong><span class="verdict ok">valid</span></div>
+      <pre><code>{"p":"brc-20","op":"deploy","tick":"ordi","max":"21000000","lim":"1000"}</code></pre>
+      <p class="vector-why">The original <code>ordi</code> deploy. Four-byte ticker, positive
+      <code>max</code>, <code>lim</code> at or below <code>max</code>, <code>dec</code> omitted so
+      divisibility is 18 (<a href="spec.html#r7">R7</a>, <a href="spec.html#r9">R9</a>).</p>
+    </div>
+
+    <div class="vector">
+      <div class="vector-head"><strong>V2 · deploy with explicit decimals</strong><span class="verdict ok">valid</span></div>
+      <pre><code>{"p":"brc-20","op":"deploy","tick":"tst4","max":"1000","lim":"10","dec":"2"}</code></pre>
+      <p class="vector-why"><code>dec</code> of 2 means amounts for this ticker may carry at most
+      two decimal places. <code>lim</code> of 10 caps each mint; 100 mints are needed to exhaust
+      the supply (<a href="spec.html#r9">R9</a>).</p>
+    </div>
+
+    <div class="vector">
+      <div class="vector-head"><strong>V3 · mint</strong><span class="verdict ok">valid</span></div>
+      <pre><code>{"p":"brc-20","op":"mint","tick":"ordi","amt":"1000"}</code></pre>
+      <p class="vector-why">All required fields present as strings. Effect depends on the deploy's
+      <code>lim</code> and remaining supply (<a href="spec.html#r13">R13</a>,
+      <a href="spec.html#r14">R14</a>).</p>
+    </div>
+
+    <div class="vector">
+      <div class="vector-head"><strong>V4 · transfer</strong><span class="verdict ok">valid</span></div>
+      <pre><code>{"p":"brc-20","op":"transfer","tick":"ordi","amt":"100"}</code></pre>
+      <p class="vector-why">Well-formed. Validity at confirmation also requires 100 available at
+      the holding address (<a href="spec.html#r16">R16</a>).</p>
+    </div>
+
+    <div class="vector">
+      <div class="vector-head"><strong>V5 · self-mint deploy, 5-byte ticker</strong><span class="verdict ok">valid</span></div>
+      <pre><code>{"p":"brc-20","op":"deploy","tick":"gamma","max":"1000","self_mint":"true"}</code></pre>
+      <p class="vector-why"><code>gamma</code> is 5 UTF-8 bytes, permitted only because
+      <code>self_mint</code> is the string <code>"true"</code>. Omitting <code>lim</code> means the
+      per-mint limit equals <code>max</code> (<a href="spec.html#extensions">extensions</a>).</p>
+    </div>
+
+    <div class="vector">
+      <div class="vector-head"><strong>V6 · formatting and unknown keys</strong><span class="verdict ok">valid</span></div>
+      <pre><code>{
+  "p": "brc-20",
+  "op": "mint",
+  "tick": "ORDI",
+  "amt": "1.500",
+  "memo": "ignored"
+}</code></pre>
+      <p class="vector-why">Whitespace is irrelevant. <code>"ORDI"</code> is the same ticker as
+      <code>ordi</code> (<a href="spec.html#r8">R8</a>). <code>"1.500"</code> trims to one
+      significant decimal place, so it fits any <code>dec</code> of 1 or more
+      (<a href="spec.html#r11">R11</a>). Unknown keys are ignored
+      (<a href="spec.html#r6">R6</a>).</p>
+    </div>
+
+    <h3 id="payload-invalid">1.2 Invalid payloads</h3>
+
+    <div class="vector">
+      <div class="vector-head"><strong>I1 · numeric field as a JSON number</strong><span class="verdict bad">invalid</span></div>
+      <pre><code>{"p":"brc-20","op":"deploy","tick":"ordi","max":21000000,"lim":"1000"}</code></pre>
+      <p class="vector-why">The single most common mistake. <code>max</code> is an unquoted JSON
+      number; every BRC-20 value must be a JSON string. Write <code>"max":"21000000"</code>
+      (<a href="spec.html#r3">R3</a>).</p>
+    </div>
+
+    <div class="vector">
+      <div class="vector-head"><strong>I2 · wrong protocol tag</strong><span class="verdict bad">not BRC-20</span></div>
+      <pre><code>{"p":"brc20","op":"mint","tick":"ordi","amt":"10"}</code></pre>
+      <p class="vector-why"><code>p</code> must be exactly <code>"brc-20"</code>, with the hyphen.
+      No BRC-20 indexer reads this inscription at all (<a href="spec.html#r4">R4</a>).</p>
+    </div>
+
+    <div class="vector">
+      <div class="vector-head"><strong>I3 · operation not lowercase</strong><span class="verdict bad">invalid</span></div>
+      <pre><code>{"p":"brc-20","op":"Mint","tick":"ordi","amt":"10"}</code></pre>
+      <p class="vector-why"><code>op</code> values are case-sensitive and lowercase. Ticker
+      comparison is case-insensitive, but nothing else is
+      (<a href="spec.html#r5">R5</a>, <a href="spec.html#r8">R8</a>).</p>
+    </div>
+
+    <div class="vector">
+      <div class="vector-head"><strong>I4 · ticker too short</strong><span class="verdict bad">invalid</span></div>
+      <pre><code>{"p":"brc-20","op":"mint","tick":"ord","amt":"10"}</code></pre>
+      <p class="vector-why">Three UTF-8 bytes. A ticker is exactly 4 bytes, or 5 under the
+      self-mint extension (<a href="spec.html#r7">R7</a>).</p>
+    </div>
+
+    <div class="vector">
+      <div class="vector-head"><strong>I5 · 5-byte ticker without self-mint</strong><span class="verdict bad">invalid</span></div>
+      <pre><code>{"p":"brc-20","op":"deploy","tick":"gamma","max":"1000"}</code></pre>
+      <p class="vector-why">Same ticker as V5 but no <code>"self_mint":"true"</code>, so the
+      5-byte length is not permitted (<a href="spec.html#r7">R7</a>).</p>
+    </div>
+
+    <div class="vector">
+      <div class="vector-head"><strong>I6 · decimals above the maximum</strong><span class="verdict bad">invalid</span></div>
+      <pre><code>{"p":"brc-20","op":"deploy","tick":"dec9","max":"1000","dec":"20"}</code></pre>
+      <p class="vector-why">Divisibility is capped at 18 decimal places
+      (<a href="spec.html#r9">R9</a>).</p>
+    </div>
+
+    <div class="vector">
+      <div class="vector-head"><strong>I7 · per-mint limit above maximum supply</strong><span class="verdict bad">invalid</span></div>
+      <pre><code>{"p":"brc-20","op":"deploy","tick":"lim9","max":"1000","lim":"5000"}</code></pre>
+      <p class="vector-why"><code>lim</code> may not exceed <code>max</code>
+      (<a href="spec.html#r9">R9</a>).</p>
+    </div>
+
+    <div class="vector">
+      <div class="vector-head"><strong>I8 · zero amount</strong><span class="verdict bad">invalid</span></div>
+      <pre><code>{"p":"brc-20","op":"mint","tick":"ordi","amt":"0"}</code></pre>
+      <p class="vector-why">Amounts must be positive. Zero-value operations are not a way to
+      signal anything (<a href="spec.html#r9">R9</a>).</p>
+    </div>
+
+    <div class="vector">
+      <div class="vector-head"><strong>I9 · too many decimal places</strong><span class="verdict bad">invalid</span></div>
+      <pre><code>{"p":"brc-20","op":"mint","tick":"ordi","amt":"1.0000000000000000001"}</code></pre>
+      <p class="vector-why">Nineteen fractional digits, above the protocol maximum of 18. Against a
+      ticker with a smaller <code>dec</code>, correspondingly fewer digits are allowed
+      (<a href="spec.html#r11">R11</a>).</p>
+    </div>
+
+    <div class="vector">
+      <div class="vector-head"><strong>I10 · value above uint64</strong><span class="verdict bad">invalid</span></div>
+      <pre><code>{"p":"brc-20","op":"deploy","tick":"big4","max":"18446744073709551616"}</code></pre>
+      <p class="vector-why">One above the uint64 maximum, 18446744073709551615. Indexers apply
+      uint-safe arithmetic (<a href="spec.html#r9">R9</a>).</p>
+    </div>
+
+    <div class="vector">
+      <div class="vector-head"><strong>I11 · leading zeros</strong><span class="verdict bad">invalid</span></div>
+      <pre><code>{"p":"brc-20","op":"transfer","tick":"ordi","amt":"0100"}</code></pre>
+      <p class="vector-why">The amount grammar forbids leading zeros. Write <code>"100"</code>
+      (<a href="spec.html#r11">R11</a>).</p>
+    </div>
+
+    <div class="vector">
+      <div class="vector-head"><strong>I12 · missing required field</strong><span class="verdict bad">invalid</span></div>
+      <pre><code>{"p":"brc-20","op":"mint","tick":"ordi"}</code></pre>
+      <p class="vector-why">A mint requires <code>amt</code>. There is no default
+      (<a href="spec.html#r13">R13</a>).</p>
+    </div>
+
+    <div class="vector">
+      <div class="vector-head"><strong>I13 · malformed JSON</strong><span class="verdict bad">not BRC-20</span></div>
+      <pre><code>{"p":"brc-20","op":"mint","tick":"ordi","amt":"10",}</code></pre>
+      <p class="vector-why">Trailing comma. The content does not parse as JSON, so it is not an
+      operation at all (<a href="spec.html#r1">R1</a>).</p>
+    </div>
+
+    <div class="vector">
+      <div class="vector-head"><strong>I14 · array instead of object</strong><span class="verdict bad">not BRC-20</span></div>
+      <pre><code>[{"p":"brc-20","op":"mint","tick":"ordi","amt":"10"}]</code></pre>
+      <p class="vector-why">An operation is one JSON object. Batching several operations into one
+      inscription is not part of the protocol (<a href="spec.html#r1">R1</a>).</p>
+    </div>
+
+    <h2 id="ledger">2. Ledger vectors</h2>
+    <p>These fix the behavior that payload checking cannot: ordering, supply accounting, the
+    two-phase transfer, and reversal. Each vector lists operations in block order and the exact
+    resulting state.</p>
+
+    <h3 id="l1">L1 · First is valid</h3>
+    <div class="posting">
+      <div class="table-scroll">
+        <table>
+          <caption>Operations</caption>
+          <thead><tr><th scope="col">Block</th><th scope="col">Operation</th><th scope="col">Outcome</th></tr></thead>
+          <tbody>
+            <tr><td class="amount">900001</td><td><code>{"p":"brc-20","op":"deploy","tick":"tst4","max":"1000","lim":"10"}</code></td><td class="credit">Applied. <code>tst4</code> is now deployed with max 1000, lim 10.</td></tr>
+            <tr><td class="amount">900002</td><td><code>{"p":"brc-20","op":"deploy","tick":"TST4","max":"9999999","lim":"9999999"}</code></td><td class="debit">Ignored. Same ticker after lowercasing.</td></tr>
+            <tr><td class="amount">900003</td><td><code>{"p":"brc-20","op":"mint","tick":"tst4","amt":"10"}</code> by A</td><td class="credit">Applied against the <em>first</em> deploy: 10 is within lim 10.</td></tr>
+            <tr><td class="amount">900003</td><td><code>{"p":"brc-20","op":"mint","tick":"tst4","amt":"5000"}</code> by A</td><td class="debit">Invalid. 5000 exceeds lim 10 from the owning deploy.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Expected state:</strong> <code>tst4</code> has max 1000, lim 10, dec 18, minted
+      supply 10. A holds 10 available. The second deploy never existed as far as the ledger is
+      concerned (<a href="spec.html#r10">R10</a>, <a href="spec.html#r8">R8</a>).</p>
+    </div>
+
+    <h3 id="l2">L2 · The mint remainder rule</h3>
+    <div class="posting">
+      <p>Ticker <code>rem4</code> deployed with <code>max</code> 1000 and <code>lim</code> 400.</p>
+      <div class="table-scroll">
+        <table>
+          <caption>Operations, in block order</caption>
+          <thead><tr><th scope="col">#</th><th scope="col">Operation</th><th scope="col" class="amount">Credited</th><th scope="col" class="amount">Minted supply</th></tr></thead>
+          <tbody>
+            <tr><td class="amount">1</td><td>A mints 400</td><td class="amount credit">400</td><td class="amount">400</td></tr>
+            <tr><td class="amount">2</td><td>B mints 400</td><td class="amount credit">400</td><td class="amount">800</td></tr>
+            <tr><td class="amount">3</td><td>C mints 400</td><td class="amount credit">200</td><td class="amount">1000</td></tr>
+            <tr><td class="amount">4</td><td>A mints 1</td><td class="amount debit">0</td><td class="amount">1000</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Expected state:</strong> A holds 400, B holds 400, C holds 200. Operation 3 is
+      credited only the 200 remaining, not the 400 requested, and not rejected. Operation 4 is
+      invalid because the supply is exhausted (<a href="spec.html#r14">R14</a>).</p>
+      <p><strong>Trap:</strong> an implementation that rejects operation 3 outright, or credits it
+      the full 400, diverges from every other indexer from that block onward.</p>
+    </div>
+
+    <h3 id="l3">L3 · Two-phase transfer, all three outcomes</h3>
+    <div class="posting">
+      <p>A holds 1000 <code>ordi</code>, all available. Each row starts from that state.</p>
+      <div class="table-scroll">
+        <table>
+          <caption>Postings per outcome</caption>
+          <thead><tr>
+            <th scope="col">Sequence</th>
+            <th scope="col" class="amount">A available</th>
+            <th scope="col" class="amount">A transferable</th>
+            <th scope="col" class="amount">B available</th>
+          </tr></thead>
+          <tbody>
+            <tr><td>Start</td><td class="amount">1000</td><td class="amount">0</td><td class="amount">0</td></tr>
+            <tr><td>A inscribes transfer of 100</td><td class="amount">900</td><td class="amount">100</td><td class="amount">0</td></tr>
+            <tr><td>…then spends it to B</td><td class="amount">900</td><td class="amount">0</td><td class="amount">100</td></tr>
+            <tr><td>…or spends it back to A</td><td class="amount">1000</td><td class="amount">0</td><td class="amount">0</td></tr>
+            <tr><td>…or spends it as fee</td><td class="amount">1000</td><td class="amount">0</td><td class="amount">0</td></tr>
+            <tr><td>…then moves the spent inscription again</td><td colspan="3">No further BRC-20 effect, whatever it does.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Expected behavior:</strong> the inscribe step never changes A's overall balance;
+      it only reclassifies 100 from available to transferable. Self and fee spends both restore
+      availability and credit nobody. The second and later spends of the same inscription are inert
+      (<a href="spec.html#r17">R17</a> to <a href="spec.html#r21">R21</a>).</p>
+      <p><strong>Trap:</strong> collapsing inscribe and spend into one event produces the right
+      final balances for the recipient case and the wrong ones for self and fee, and it breaks
+      state hashes against implementations that emit both events.</p>
+    </div>
+
+    <h3 id="l4">L4 · Over-reservation and permanent voiding</h3>
+    <div class="posting">
+      <div class="table-scroll">
+        <table>
+          <caption>Operations, in block order</caption>
+          <thead><tr><th scope="col">Block</th><th scope="col">Operation</th><th scope="col">Outcome</th></tr></thead>
+          <tbody>
+            <tr><td class="amount">900010</td><td>A holds 100 available; A inscribes transfer of 60</td><td class="credit">Valid. A: 40 available, 60 transferable.</td></tr>
+            <tr><td class="amount">900011</td><td>A inscribes transfer of 60 again</td><td class="debit">Void. Available balance is 40, not 100.</td></tr>
+            <tr><td class="amount">900012</td><td>A receives 500 more <code>ordi</code></td><td>A: 540 available, 60 transferable.</td></tr>
+            <tr><td class="amount">900013</td><td>A spends the block 900011 inscription to B</td><td class="debit">No effect. It was void at confirmation and stays void.</td></tr>
+            <tr><td class="amount">900014</td><td>A spends the block 900010 inscription to B</td><td class="credit">Settles: A 540 overall, B credited 60.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Expected state:</strong> A holds 540 available and 0 transferable; B holds 60
+      available. The later balance increase never revives the void inscription
+      (<a href="spec.html#r16">R16</a>).</p>
+    </div>
+
+    <h3 id="l5">L5 · Reorg reversal</h3>
+    <div class="posting">
+      <div class="table-scroll">
+        <table>
+          <caption>Chain event sequence</caption>
+          <thead><tr><th scope="col">Step</th><th scope="col">Event</th><th scope="col">Expected state</th></tr></thead>
+          <tbody>
+            <tr><td class="amount">1</td><td>Block 900001: A mints 1000 <code>tst4</code></td><td>A: 1000 available.</td></tr>
+            <tr><td class="amount">2</td><td>Block 900002: A inscribes transfer of 250, then spends it to B</td><td>A: 750 overall; B: 250 available.</td></tr>
+            <tr><td class="amount">3</td><td>Blocks 900001 and 900002 are orphaned</td><td>Both blocks' events are reversed: A and B hold nothing, minted supply returns to 0.</td></tr>
+            <tr><td class="amount">4</td><td>Replacement block 900001' contains only the mint</td><td>A: 1000 available; B: 0. The transfer never happened.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Expected behavior:</strong> the state after step 4 must be identical to a clean
+      replay of the new chain. Reversal must restore both sides of the transfer and return the
+      reservation, and reverting a deploy must revert every mint and transfer that depended on
+      it.</p>
+      <p><strong>Trap:</strong> reversing only the settlement and leaving the reservation behind
+      leaves A with a phantom transferable balance that no clean replay would produce. Reversal
+      below a declared finality depth should be refused as an error rather than applied.</p>
+    </div>
+
+    <h2 id="grounding">3. Where these come from</h2>
+    <p>Payload vectors follow the rules in the <a href="spec.html">specification</a> as published
+    by domo and maintained by the Layer1 Foundation, with OPI as the reference implementation.
+    Ledger vectors are stated to match the behavior the Bitcoin Universe BRC-20 read model
+    enforces: per-mint limit and maximum supply invariants, immutable deploy economics,
+    case-insensitive ticker identity with preserved display casing, separate transfer-inscribe and
+    first-spend events with recipient, self, and fee dispositions, integer-only arithmetic on
+    scaled amounts, and transactional reorg reversal that refuses to cross the finalized height.
+    Behavior that is not implemented in the org's own code is not asserted here.</p>
+  </div>
+</main>
+
+<footer class="colophon">
+  <div class="wrap">
+    <dl>
+      <dt>Owning repository</dt><dd><a href="https://github.com/bitcoinuniverseio/brc-20">bitcoinuniverseio/brc-20</a></dd>
+      <dt>Source path</dt><dd><code>/vectors.html</code></dd>
+      <dt>Spec version</dt><dd>1.0.0</dd>
+      <dt>Lifecycle</dt><dd>Stable</dd>
+      <dt>Chain / network</dt><dd>Bitcoin mainnet</dd>
+      <dt>Last verified</dt><dd>2026-09-01</dd>
+    </dl>
+    <p><a href="https://github.com/bitcoinuniverseio/brc-20/edit/main/vectors.html">Edit this page on GitHub</a> ·
+    Part of the <a href="https://docs.bitcoinuniverse.io">Bitcoin Universe documentation platform</a> ·
+    <a href="https://github.com/bitcoinuniverseio/brc-20/security/advisories/new">Report a security issue</a></p>
+  </div>
+</footer>
+<script src="site.js" defer></script>
+</body>
+</html>
