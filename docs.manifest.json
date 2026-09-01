@@ -4,7 +4,7 @@
   "name": "BRC-20",
   "classification": "protocol",
   "repository": "bitcoinuniverseio/brc-20",
-  "documentationUrl": "https://docs.bitcoinuniverse.io/protocols/brc-20/",
+  "documentationUrl": "https://docs.bitcoinuniverse.io/protocols/brc20/",
   "docsRoot": ".",
   "sourceRef": "main",
   "lifecycle": "experimental",
