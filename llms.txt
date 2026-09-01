@@ -1,0 +1,35 @@
+# BRC-20
+
+> BRC-20 is a fungible token protocol carried inside Ordinals inscriptions on Bitcoin. Operations are small JSON objects (deploy, mint, transfer). Bitcoin consensus validates none of it: token state is a ledger that indexers reconstruct by replaying inscriptions in block order under a shared rulebook. This site is the Bitcoin Universe protocol documentation for BRC-20.
+
+Origin: created by domo on 8 March 2023 as a public experiment. Bitcoin Universe did not originate BRC-20 and does not control its rules; the maintained indexing rules are published by the Layer1 Foundation, with OPI as the open reference implementation. Universe-specific indexing decisions are marked as such on each page.
+
+Key facts: Bitcoin mainnet. Operations deploy, mint, transfer. Ticker is exactly 4 UTF-8 bytes (5 under the self-mint extension), compared case-insensitively. Balances are per address (output script) and split into available and transferable; overall equals their sum. Conflicts resolve by first-is-valid. Transfers are two-phase: inscribe to reserve, then the inscription's first spend settles it. Documentation spec version 1.0.0, verified 2026-09-01, lifecycle stable.
+
+## Pages
+
+- [Overview](https://bitcoinuniverseio.github.io/brc-20/): what BRC-20 is in plain language, fact sheet (chain, operations, ticker rules, balance model, origin), audience guide, entry points, verified Bitcoin Universe support, provenance and attribution, security reporting.
+- [Specification](https://bitcoinuniverseio.github.io/brc-20/spec.html): normative rules. Carrier and encoding, identifiers, field tables for deploy/mint/transfer, numbered validity rules R1 to R24 with per-rule anchors (for example #r10 for first-is-valid, #r14 for the mint remainder rule, #r16 to #r21 for the two-phase transfer), state transition table, invalid conditions, extensions (self-mint 5-byte tickers, programmable extensions out of scope), and Bitcoin Universe indexing decisions.
+- [Guide](https://bitcoinuniverseio.github.io/brc-20/guide.html): plain-language walkthrough. Mental model, worked deploy example, worked mint example including the remainder rule, the two-phase transfer with full postings for sending 100 ordi, the three first-spend outcomes (recipient, self, fee), how balances get lost to inscription-unaware wallets, pre-signing checklist, and the Bitcoin Universe support matrix.
+- [Reference](https://bitcoinuniverseio.github.io/brc-20/reference.html): terminology glossary, confirmation semantics, mempool semantics, reorg semantics with reversal requirements, the cursed inscriptions caveat, amounts and integer arithmetic, fee and size considerations, limitations, security considerations, and a 16-point implementation checklist.
+- [Test vectors](https://bitcoinuniverseio.github.io/brc-20/vectors.html): 6 valid and 14 invalid payload vectors with expected outcomes and rule references, plus 5 ledger state vectors (first-is-valid, mint remainder, two-phase transfer outcomes, over-reservation and permanent voiding, reorg reversal).
+- [Payload validator](https://bitcoinuniverseio.github.io/brc-20/validator.html): client-side tool that checks a pasted inscription JSON payload against the validity rules and explains each result. No data leaves the browser. Also documents what cannot be checked offline.
+- [Changelog](https://bitcoinuniverseio.github.io/brc-20/changelog.html): documentation version history, upstream protocol milestones, and the versioning policy for rule numbers.
+
+## Machine-readable
+
+- [Search index](https://bitcoinuniverseio.github.io/brc-20/search-index.json): every heading with anchor, snippet, and aliases.
+- [Documentation manifest](https://bitcoinuniverseio.github.io/brc-20/docs.manifest.json): repository, classification, lifecycle, chains, audiences, and last verified commit.
+- [Sitemap](https://bitcoinuniverseio.github.io/brc-20/sitemap.xml)
+
+## Source and reporting
+
+- Repository: https://github.com/bitcoinuniverseio/brc-20
+- Documentation platform: https://docs.bitcoinuniverse.io
+- Security reporting: https://github.com/bitcoinuniverseio/brc-20/security/advisories/new
+
+## Upstream references
+
+- Original BRC-20 documentation (domo): https://docs.bitcoints.org/brc-20
+- Layer1 Foundation indexing rules: https://layer1.gitbook.io/layer1-foundation/protocols/brc-20/indexing
+- OPI reference indexer: https://github.com/bestinslot-xyz/OPI

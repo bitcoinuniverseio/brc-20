@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "brc-20",
+  "name": "BRC-20",
+  "classification": "protocol",
+  "repository": "bitcoinuniverseio/brc-20",
+  "documentationUrl": "https://docs.bitcoinuniverse.io/protocols/brc-20",
+  "docsRoot": ".",
+  "sourceRef": "main",
+  "releasedRef": "40eb7ba2ccfab82ba70010e8127d043b71785951",
+  "releaseVersion": "1.0.0",
+  "lifecycle": "stable",
+  "chains": [
+    {
+      "chain": "bitcoin",
+      "networks": ["mainnet"]
+    }
+  ],
+  "protocols": ["brc20"],
+  "audiences": [
+    "user",
+    "collector",
+    "app-developer",
+    "protocol-implementer",
+    "indexer-operator"
+  ],
+  "specifications": ["spec.html"],
+  "owners": ["bitcoinuniverseio"],
+  "securityClassification": "public",
+  "lastVerified": {
+    "commit": "40eb7ba2ccfab82ba70010e8127d043b71785951",
+    "timestamp": "2026-09-01T00:00:00Z"
+  }
+}

@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Specification | BRC-20</title>
+<meta name="description" content="Normative BRC-20 specification: JSON payload format, deploy, mint, and transfer field tables, numbered validity rules, ticker identity, decimals and arithmetic, state transitions, and invalid conditions.">
+<link rel="canonical" href="https://bitcoinuniverseio.github.io/brc-20/spec.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="BRC-20 specification">
+<meta property="og:description" content="The complete BRC-20 payload rules: field tables, 24 numbered validity rules, state transitions, and invalid conditions.">
+<meta property="og:url" content="https://bitcoinuniverseio.github.io/brc-20/spec.html">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script>try{var t=localStorage.getItem('brc20-theme');if(t==='dark'||t==='light'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}</script>
+<link rel="stylesheet" href="ledger.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="masthead">
+  <div class="wrap">
+    <div class="masthead-row">
+      <div>
+        <a class="site-name" href="./">BRC-20<span class="folio"> ¶</span></a>
+        <p class="site-sub">A fungible token ledger written in Bitcoin inscriptions</p>
+      </div>
+      <div class="masthead-tools">
+        <div class="search" role="search">
+          <label class="sr-only" for="site-search">Search this site</label>
+          <input type="search" id="site-search" placeholder="Search ( / )" autocomplete="off" aria-expanded="false" aria-controls="search-results">
+          <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+        </div>
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false">Dark</button>
+      </div>
+    </div>
+    <nav class="site-nav" aria-label="Primary">
+      <ul>
+        <li><a href="./">Overview</a></li>
+        <li><a href="spec.html" aria-current="page">Specification</a></li>
+        <li><a href="guide.html">Guide</a></li>
+        <li><a href="reference.html">Reference</a></li>
+        <li><a href="vectors.html">Test vectors</a></li>
+        <li><a href="validator.html">Validator</a></li>
+        <li><a href="changelog.html">Changelog</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap">
+    <p class="kicker">Normative specification · version 1.0.0</p>
+    <h1>BRC-20 specification</h1>
+    <p class="lede">This document states the BRC-20 payload format and validity rules as one numbered
+    rulebook. The protocol originated with domo's March 2023 experiment; the maintained indexing
+    rules are published by the Layer1 Foundation with OPI as the open reference implementation.
+    This page restates those rules for implementers and marks every Bitcoin Universe-specific
+    indexing decision explicitly in <a href="#universe-notes">section 8</a>.</p>
+
+    <div class="note">
+      <span class="note-label">Reading this page</span>
+      <p>Rules are numbered <strong>R1 to R24</strong> and are individually linkable
+      (for example <a href="#r10">#r10</a>). The <a href="validator.html">payload validator</a>
+      and the <a href="vectors.html">test vectors</a> cite these rule numbers. An operation that
+      breaks any applicable rule has <strong>no effect</strong> on the ledger; there are no
+      partial applications except the last-mint remainder rule <a href="#r14">R14</a>.</p>
+    </div>
+
+    <h2 id="carrier">1. Carrier and encoding</h2>
+    <p>A BRC-20 operation is the content of one Ordinals inscription:</p>
+    <ul>
+      <li>The content is committed in a taproot witness using the ord envelope
+      (commit transaction, then reveal transaction) and is tracked to a single satoshi under the
+      Ordinals numbering rules.</li>
+      <li>The content type must be <code>text/plain</code> (any charset parameter) or
+      <code>application/json</code> (<a href="#r2">R2</a>).</li>
+      <li>The body is one UTF-8 JSON object (<a href="#r1">R1</a>). Whitespace between tokens is
+      irrelevant. Every protocol value is a JSON string, including all numbers
+      (<a href="#r3">R3</a>).</li>
+    </ul>
+    <pre><code>{"p":"brc-20","op":"deploy","tick":"ordi","max":"21000000","lim":"1000"}</code></pre>
+    <p>That single line, inscription number 348020, opened the first BRC-20 ticker. The protocol
+    has no other wire format: no OP_RETURN variant, no binary encoding.</p>
+
+    <h2 id="identifiers">2. Identifiers</h2>
+    <dl>
+      <dt>Ticker (<code>tick</code>)</dt>
+      <dd>The asset identifier. Exactly <strong>4 UTF-8 bytes</strong>
+      (<a href="#r7">R7</a>). The limit counts bytes, not characters: <code>"ordi"</code> is
+      4 bytes, and a single 4-byte emoji is also a valid ticker. Comparison is
+      case-insensitive (<a href="#r8">R8</a>): <code>ordi</code>, <code>ORDI</code>, and
+      <code>OrDi</code> are the same asset. Under the self-issuance extension
+      (<a href="#extensions">section 7</a>), a ticker may instead be exactly 5 bytes.</dd>
+      <dt>Inscription ID</dt>
+      <dd><code>&lt;reveal-txid&gt;i&lt;index&gt;</code>, for example
+      <code>b61b0172d95e266c18aea0c624db987e971a5d6d4ebc2aaed85da4642d635735i0</code>.
+      Identifies one inscription, and therefore one operation.</dd>
+      <dt>Address</dt>
+      <dd>Balance identity is the output script (scriptPubKey) holding the inscribed satoshi
+      (<a href="#r22">R22</a>). In practice this is an address, usually taproot.</dd>
+    </dl>
+
+    <h2 id="operations">3. Operations</h2>
+
+    <h3 id="op-deploy">3.1 deploy</h3>
+    <p>Opens the ledger for a new ticker and fixes its economics forever.</p>
+    <div class="table-scroll">
+      <table>
+        <caption>deploy fields</caption>
+        <thead><tr><th scope="col">Field</th><th scope="col">Required</th><th scope="col">Value</th><th scope="col">Constraints</th></tr></thead>
+        <tbody>
+          <tr><td><code>p</code></td><td><span class="req">yes</span></td><td><code>"brc-20"</code></td><td>Exact lowercase string (<a href="#r4">R4</a>)</td></tr>
+          <tr><td><code>op</code></td><td><span class="req">yes</span></td><td><code>"deploy"</code></td><td>Exact lowercase string (<a href="#r5">R5</a>)</td></tr>
+          <tr><td><code>tick</code></td><td><span class="req">yes</span></td><td>ticker</td><td>4 UTF-8 bytes; 5 with <code>self_mint</code> (<a href="#r7">R7</a>)</td></tr>
+          <tr><td><code>max</code></td><td><span class="req">yes</span></td><td>maximum supply</td><td>Positive decimal string, amount grammar (<a href="#r9">R9</a>, <a href="#r11">R11</a>)</td></tr>
+          <tr><td><code>lim</code></td><td><span class="opt">no</span></td><td>per-mint limit</td><td>Positive, at most <code>max</code>; defaults to <code>max</code> (<a href="#r9">R9</a>)</td></tr>
+          <tr><td><code>dec</code></td><td><span class="opt">no</span></td><td>decimal places</td><td>Integer string 0 to 18; defaults to 18 (<a href="#r9">R9</a>)</td></tr>
+          <tr><td><code>self_mint</code></td><td><span class="opt">no</span></td><td><code>"true"</code></td><td>Extension; required for 5-byte tickers (<a href="#extensions">section 7</a>)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <pre><code>{"p":"brc-20","op":"deploy","tick":"ordi","max":"21000000","lim":"1000"}</code></pre>
+
+    <h3 id="op-mint">3.2 mint</h3>
+    <p>Credits new units to the first owner of the mint inscription.</p>
+    <div class="table-scroll">
+      <table>
+        <caption>mint fields</caption>
+        <thead><tr><th scope="col">Field</th><th scope="col">Required</th><th scope="col">Value</th><th scope="col">Constraints</th></tr></thead>
+        <tbody>
+          <tr><td><code>p</code></td><td><span class="req">yes</span></td><td><code>"brc-20"</code></td><td>Exact lowercase string (<a href="#r4">R4</a>)</td></tr>
+          <tr><td><code>op</code></td><td><span class="req">yes</span></td><td><code>"mint"</code></td><td>Exact lowercase string (<a href="#r5">R5</a>)</td></tr>
+          <tr><td><code>tick</code></td><td><span class="req">yes</span></td><td>ticker</td><td>Must match a confirmed deploy (<a href="#r12">R12</a>)</td></tr>
+          <tr><td><code>amt</code></td><td><span class="req">yes</span></td><td>amount to mint</td><td>Positive, at most <code>lim</code>, decimals within <code>dec</code> (<a href="#r13">R13</a>)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <pre><code>{"p":"brc-20","op":"mint","tick":"ordi","amt":"1000"}</code></pre>
+
+    <h3 id="op-transfer">3.3 transfer</h3>
+    <p>Moves units in two phases: first inscribe the intent, then spend the inscription
+    (<a href="#state">section 4</a>).</p>
+    <div class="table-scroll">
+      <table>
+        <caption>transfer fields</caption>
+        <thead><tr><th scope="col">Field</th><th scope="col">Required</th><th scope="col">Value</th><th scope="col">Constraints</th></tr></thead>
+        <tbody>
+          <tr><td><code>p</code></td><td><span class="req">yes</span></td><td><code>"brc-20"</code></td><td>Exact lowercase string (<a href="#r4">R4</a>)</td></tr>
+          <tr><td><code>op</code></td><td><span class="req">yes</span></td><td><code>"transfer"</code></td><td>Exact lowercase string (<a href="#r5">R5</a>)</td></tr>
+          <tr><td><code>tick</code></td><td><span class="req">yes</span></td><td>ticker</td><td>Must match a confirmed deploy (<a href="#r12">R12</a>)</td></tr>
+          <tr><td><code>amt</code></td><td><span class="req">yes</span></td><td>amount to move</td><td>Positive, at most the available balance at confirmation (<a href="#r16">R16</a>)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <pre><code>{"p":"brc-20","op":"transfer","tick":"ordi","amt":"100"}</code></pre>
+
+    <h2 id="rules">4. Validity rules</h2>
+
+    <h3 id="rules-envelope">Envelope and parsing</h3>
+    <ol class="rules">
+      <li id="r1">The inscription content MUST parse as exactly one JSON object. Content that is
+      not valid JSON, or that parses to an array, string, number, boolean, or null, is not a
+      BRC-20 operation and is ignored entirely.</li>
+      <li id="r2">The inscription content type MUST be <code>text/plain</code> (with or without
+      parameters such as <code>;charset=utf-8</code>) or <code>application/json</code>. Other
+      content types are not BRC-20 operations.</li>
+      <li id="r3">Every protocol field value MUST be a JSON string. A JSON number, boolean, or
+      null in <code>p</code>, <code>op</code>, <code>tick</code>, <code>max</code>,
+      <code>lim</code>, <code>amt</code>, <code>dec</code>, or <code>self_mint</code> makes the
+      operation invalid. <code>"max": 21000000</code> (unquoted) is the classic mistake.</li>
+      <li id="r4">The <code>p</code> field MUST equal <code>"brc-20"</code> exactly: lowercase,
+      with the hyphen. Any other value means the inscription is not a BRC-20 operation.</li>
+      <li id="r5">The <code>op</code> field MUST equal <code>"deploy"</code>, <code>"mint"</code>,
+      or <code>"transfer"</code> exactly, in lowercase.</li>
+      <li id="r6">Keys are case-sensitive. Unknown keys are ignored and do not invalidate an
+      otherwise valid operation. A missing required key makes the operation invalid.</li>
+    </ol>
+
+    <h3 id="rules-ticker">Tickers</h3>
+    <ol class="rules" start="7" style="counter-reset: rule 6">
+      <li id="r7"><code>tick</code> MUST be exactly 4 bytes when encoded as UTF-8. Under the
+      self-issuance extension a deploy with <code>"self_mint": "true"</code> MAY instead use a
+      ticker of exactly 5 UTF-8 bytes, and mints and transfers of such a ticker carry the same
+      5-byte value. The limit counts bytes, never characters.</li>
+      <li id="r8">Ticker identity is case-insensitive. Indexers MUST compare tickers after
+      lowercasing and SHOULD preserve the deploy's original casing for display.</li>
+    </ol>
+
+    <h3 id="rules-deploy">deploy</h3>
+    <ol class="rules" start="9" style="counter-reset: rule 8">
+      <li id="r9"><code>max</code> is required and MUST be positive. <code>lim</code>, when
+      present, MUST be positive and MUST NOT exceed <code>max</code>; when absent it defaults to
+      <code>max</code>. <code>dec</code>, when present, MUST be a string of digits representing
+      an integer from 0 through 18; when absent it defaults to 18. Arithmetic is uint-safe: no
+      value may exceed the uint64 maximum, 18446744073709551615.</li>
+      <li id="r10"><strong>First is valid.</strong> The first valid confirmed deploy of a ticker
+      owns it. Every later deploy of the same ticker (case-insensitive) is ignored, whatever its
+      fields say. Deployment economics (<code>max</code>, <code>lim</code>, <code>dec</code>) are
+      immutable once indexed.</li>
+      <li id="r11">Numeric values use the amount grammar
+      <code>(0|[1-9][0-9]*)(.[0-9]+)?</code>: base-10, no sign, no exponent, no leading zeros, no
+      lone leading or trailing decimal point, no separators. After trimming trailing zeros, the
+      fractional digits MUST NOT exceed the ticker's <code>dec</code>.</li>
+    </ol>
+
+    <h3 id="rules-mint">mint</h3>
+    <ol class="rules" start="12" style="counter-reset: rule 11">
+      <li id="r12">A mint is valid only for a ticker whose valid deploy was confirmed in an
+      earlier block, or earlier in the same block by transaction order. Minting an undeployed
+      ticker has no effect.</li>
+      <li id="r13"><code>amt</code> is required, MUST be positive, MUST respect the amount
+      grammar and the ticker's <code>dec</code>, and MUST NOT exceed the ticker's per-mint
+      <code>lim</code>.</li>
+      <li id="r14">A mint that would push minted supply past <code>max</code> is credited only
+      the remaining amount. Once minted supply equals <code>max</code>, every further mint is
+      invalid. This remainder rule is the protocol's only partial application.</li>
+      <li id="r15">The minted amount credits the available balance of the first owner of the
+      mint inscription: the address that receives the inscribed satoshi in the reveal
+      transaction.</li>
+    </ol>
+
+    <h3 id="rules-transfer">transfer</h3>
+    <ol class="rules" start="16" style="counter-reset: rule 15">
+      <li id="r16">Inscribing a transfer is valid only if <code>amt</code> is at most the
+      inscribing address's <strong>available</strong> balance at the moment the transfer
+      inscription is confirmed. A transfer inscription that fails this test is permanently void;
+      a later balance increase never revives it.</li>
+      <li id="r17">A valid transfer inscription immediately moves <code>amt</code> from the
+      owner's available balance to their transferable balance. Overall balance is unchanged; the
+      amount is reserved, exactly once, against that specific inscription.</li>
+      <li id="r18">A transfer inscription is <strong>one-use</strong>. Only its first spend after
+      the inscription settles it. Any later movement of the same inscription is an ordinary
+      inscription transfer with no BRC-20 effect.</li>
+      <li id="r19">If the first spend delivers the inscription to a different address, the
+      sender's overall balance is debited <code>amt</code> and the recipient's available balance
+      is credited <code>amt</code>.</li>
+      <li id="r20">If the first spend returns the inscription to the sender, the reservation is
+      released: <code>amt</code> moves back from transferable to available and no ownership
+      changes.</li>
+      <li id="r21">If the first spend consumes the inscription as transaction fee (the inscribed
+      satoshi ends up in the miner's fee claim), the inscription is spent and the amount returns
+      to the sender's available balance. No third party is credited.</li>
+    </ol>
+
+    <h3 id="rules-ordering">Ordering and identity</h3>
+    <ol class="rules" start="22" style="counter-reset: rule 21">
+      <li id="r22">Balances attach to output scripts (scriptPubKey). Operations apply in strict
+      block order: by block height, then by transaction index within the block. Replaying the
+      same blocks under these rules MUST be deterministic.</li>
+      <li id="r23">Mempool state is never protocol state. Every validity decision is made at
+      confirmation, against the confirmed ledger at that point (<a href="reference.html#confirmation">reference</a>).</li>
+      <li id="r24">Cursed inscriptions (inscriptions assigned negative numbers under the
+      Ordinals rules) are not valid BRC-20 operations.</li>
+    </ol>
+
+    <h2 id="state">5. State transitions</h2>
+    <p>Each address holds, per ticker, an <strong>available</strong> balance and a
+    <strong>transferable</strong> balance. Overall balance is their sum. The two-phase transfer
+    is the heart of the protocol: it is why a BRC-20 balance can move by spending an inscription
+    in an otherwise ordinary Bitcoin transaction.</p>
+
+    <figure>
+      <svg class="diagram" viewBox="0 0 680 320" role="img" aria-labelledby="transfer-title transfer-desc">
+        <title id="transfer-title">Two-phase transfer as double-entry postings</title>
+        <desc id="transfer-desc">A ledger with three columns: sender available, sender transferable, and recipient available. Posting one, inscribe transfer of 100: sender available is debited 100 and sender transferable is credited 100. Posting two has three alternative outcomes for the first spend. To recipient: sender transferable debited 100, recipient available credited 100. To self: sender transferable debited 100, sender available credited 100. As fee: the same restoration as self, with the inscription consumed.</desc>
+        <line class="d-double" x1="20" y1="34" x2="660" y2="34"/>
+        <text class="d-label" x="20" y="24">Transfer of 100 units, posted double-entry</text>
+        <text class="d-head" x="240" y="58">sender</text>
+        <text class="d-head" x="540" y="58">recipient</text>
+        <line class="d-rule" x1="20" y1="66" x2="660" y2="66"/>
+        <text class="d-label" x="170" y="86">available</text>
+        <text class="d-label" x="330" y="86">transferable</text>
+        <text class="d-label" x="500" y="86">available</text>
+        <line class="d-rule-soft" x1="20" y1="96" x2="660" y2="96"/>
+
+        <text x="20" y="122">1 · inscribe</text>
+        <text class="d-debit" x="170" y="122">-100</text>
+        <text class="d-credit" x="330" y="122">+100</text>
+        <text x="500" y="122">·</text>
+        <line class="d-rule-soft" x1="20" y1="136" x2="660" y2="136"/>
+
+        <text x="20" y="166">2a · to recipient</text>
+        <text x="170" y="166">·</text>
+        <text class="d-debit" x="330" y="166">-100</text>
+        <text class="d-credit" x="500" y="166">+100</text>
+        <line class="d-rule-soft" x1="20" y1="180" x2="660" y2="180"/>
+
+        <text x="20" y="210">2b · to self</text>
+        <text class="d-credit" x="170" y="210">+100</text>
+        <text class="d-debit" x="330" y="210">-100</text>
+        <text x="500" y="210">·</text>
+        <line class="d-rule-soft" x1="20" y1="224" x2="660" y2="224"/>
+
+        <text x="20" y="254">2c · as fee</text>
+        <text class="d-credit" x="170" y="254">+100</text>
+        <text class="d-debit" x="330" y="254">-100</text>
+        <text x="500" y="254">·</text>
+        <line class="d-rule" x1="20" y1="270" x2="660" y2="270"/>
+
+        <text class="d-label" x="20" y="296">Every posting balances. Overall supply never changes on transfer.</text>
+      </svg>
+      <figcaption>Postings for one transfer inscription of 100 units. Exactly one of 2a, 2b, or 2c
+      happens, decided by the inscription's first spend (<a href="#r18">R18</a> to <a href="#r21">R21</a>).</figcaption>
+    </figure>
+
+    <div class="table-scroll">
+      <table>
+        <caption>State transition summary</caption>
+        <thead><tr><th scope="col">Event</th><th scope="col">Available</th><th scope="col">Transferable</th><th scope="col">Overall</th></tr></thead>
+        <tbody>
+          <tr><td>deploy confirmed</td><td>unchanged</td><td>unchanged</td><td>unchanged (opens the ticker)</td></tr>
+          <tr><td>mint confirmed</td><td class="amount credit">+amt</td><td>unchanged</td><td class="amount credit">+amt</td></tr>
+          <tr><td>transfer inscribed</td><td class="amount debit">-amt</td><td class="amount credit">+amt</td><td>unchanged</td></tr>
+          <tr><td>first spend, to recipient</td><td>recipient <span class="credit">+amt</span></td><td class="amount debit">-amt</td><td>sender <span class="debit">-amt</span>, recipient <span class="credit">+amt</span></td></tr>
+          <tr><td>first spend, to self</td><td class="amount credit">+amt</td><td class="amount debit">-amt</td><td>unchanged</td></tr>
+          <tr><td>first spend, as fee</td><td class="amount credit">+amt</td><td class="amount debit">-amt</td><td>unchanged</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="invalid">6. Invalid conditions</h2>
+    <p>Two different failure classes exist. Content that fails <a href="#r1">R1</a>,
+    <a href="#r2">R2</a>, or <a href="#r4">R4</a> is <em>not a BRC-20 inscription at all</em>.
+    Content that passes those but breaks any other rule is an <em>invalid BRC-20 operation</em>:
+    recognized, recorded by some indexers for diagnostics, but with zero ledger effect. Both
+    classes leave balances untouched.</p>
+    <div class="table-scroll">
+      <table>
+        <caption>Common invalid conditions</caption>
+        <thead><tr><th scope="col">Condition</th><th scope="col">Class</th><th scope="col">Rule</th></tr></thead>
+        <tbody>
+          <tr><td>Content is not one JSON object</td><td>Not BRC-20</td><td><a href="#r1">R1</a></td></tr>
+          <tr><td><code>p</code> missing or not <code>"brc-20"</code></td><td>Not BRC-20</td><td><a href="#r4">R4</a></td></tr>
+          <tr><td>Numeric field written as a JSON number</td><td>Invalid operation</td><td><a href="#r3">R3</a></td></tr>
+          <tr><td>Unknown <code>op</code> value</td><td>Invalid operation</td><td><a href="#r5">R5</a></td></tr>
+          <tr><td>Ticker not 4 bytes (or 5 with <code>self_mint</code>)</td><td>Invalid operation</td><td><a href="#r7">R7</a></td></tr>
+          <tr><td>Second deploy of an existing ticker</td><td>Ignored deploy</td><td><a href="#r10">R10</a></td></tr>
+          <tr><td><code>dec</code> above 18, or not an integer string</td><td>Invalid deploy</td><td><a href="#r9">R9</a></td></tr>
+          <tr><td><code>lim</code> greater than <code>max</code></td><td>Invalid deploy</td><td><a href="#r9">R9</a></td></tr>
+          <tr><td>Value over the uint64 maximum</td><td>Invalid operation</td><td><a href="#r9">R9</a></td></tr>
+          <tr><td>More fractional digits than <code>dec</code></td><td>Invalid operation</td><td><a href="#r11">R11</a></td></tr>
+          <tr><td>Mint of an undeployed ticker</td><td>Invalid mint</td><td><a href="#r12">R12</a></td></tr>
+          <tr><td><code>amt</code> above <code>lim</code></td><td>Invalid mint</td><td><a href="#r13">R13</a></td></tr>
+          <tr><td>Mint after supply is fully minted</td><td>Invalid mint</td><td><a href="#r14">R14</a></td></tr>
+          <tr><td>Transfer <code>amt</code> above available balance</td><td>Void transfer inscription</td><td><a href="#r16">R16</a></td></tr>
+          <tr><td>Second spend of a transfer inscription</td><td>No effect</td><td><a href="#r18">R18</a></td></tr>
+          <tr><td>Cursed inscription</td><td>Not BRC-20</td><td><a href="#r24">R24</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="extensions">7. Extensions</h2>
+    <h3>Self-issuance and 5-byte tickers</h3>
+    <p>A governance-approved extension to the original rules allows deploys carrying
+    <code>"self_mint": "true"</code> to claim tickers of exactly 5 UTF-8 bytes. For such tickers
+    only the deployer may mint. Classic 4-byte tickers are unaffected. This site documents the
+    extension because 5-byte tickers exist in the live ledger and Universe indexing accepts 4 and
+    5 byte tickers for marketplace evidence.</p>
+    <h3>Programmable extensions</h3>
+    <p>Later upstream proposals (often grouped as BRC2.0) add balance-affecting programmable
+    behavior on top of the classic three operations. They are out of scope for this
+    specification. The Bitcoin Universe read model represents classic
+    <code>deploy</code> / <code>mint</code> / <code>transfer</code> economics only and does not
+    index programmable extensions.</p>
+
+    <h2 id="universe-notes">8. Universe indexing decisions</h2>
+    <p>Everything below is a Bitcoin Universe implementation decision layered on the upstream
+    rules, stated here so readers can tell the two apart.</p>
+    <ul>
+      <li><strong>Atomic integer arithmetic.</strong> Universe stores every amount as a base-10
+      integer string scaled by the ticker's <code>dec</code> (an "atomic" amount), and performs
+      all arithmetic on integers. Display amounts are validated against the exact grammar in
+      <a href="#r11">R11</a> before scaling.</li>
+      <li><strong>Invariant enforcement.</strong> The read model transactionally rejects any
+      event batch that would push minted supply past <code>max</code>, exceed a per-mint
+      <code>lim</code>, drive any balance negative, or mutate immutable deploy economics. A
+      violation rolls back the entire batch.</li>
+      <li><strong>Ticker identity.</strong> Tickers are lowercased for identity and the original
+      display casing is preserved, exactly as <a href="#r8">R8</a> requires.</li>
+      <li><strong>Marketplace evidence bounds.</strong> Transferable-inscription evidence is
+      accepted only for tickers of exactly 4 or 5 UTF-8 bytes with divisibility 0 through 18,
+      and only for confirmed events with the two transfer phases recorded separately.</li>
+      <li><strong>Coverage honesty.</strong> The Universe BRC-20 source publishes
+      <code>partial</code> coverage: confirmed history and holder state are indexed, and there is
+      no exhaustive mempool feed with a stable pending lifecycle.</li>
+      <li><strong>Classic operations only.</strong> Programmable extensions are not represented
+      in the read model (<a href="#extensions">section 7</a>).</li>
+    </ul>
+
+    <h2 id="references">9. References</h2>
+    <ul>
+      <li><a href="https://docs.bitcoints.org/brc-20" rel="external">Original BRC-20 documentation</a> (domo, March 2023)</li>
+      <li><a href="https://layer1.gitbook.io/layer1-foundation/protocols/brc-20/indexing" rel="external">Layer1 Foundation BRC-20 indexing rules</a></li>
+      <li><a href="https://github.com/bestinslot-xyz/OPI" rel="external">OPI reference indexer</a></li>
+      <li><a href="https://docs.ordinals.com/" rel="external">Ordinals handbook</a> (inscription carrier)</li>
+    </ul>
+  </div>
+</main>
+
+<footer class="colophon">
+  <div class="wrap">
+    <dl>
+      <dt>Owning repository</dt><dd><a href="https://github.com/bitcoinuniverseio/brc-20">bitcoinuniverseio/brc-20</a></dd>
+      <dt>Source path</dt><dd><code>/spec.html</code></dd>
+      <dt>Spec version</dt><dd>1.0.0</dd>
+      <dt>Lifecycle</dt><dd>Stable</dd>
+      <dt>Chain / network</dt><dd>Bitcoin mainnet</dd>
+      <dt>Last verified</dt><dd>2026-09-01</dd>
+    </dl>
+    <p><a href="https://github.com/bitcoinuniverseio/brc-20/edit/main/spec.html">Edit this page on GitHub</a> ·
+    Part of the <a href="https://docs.bitcoinuniverse.io">Bitcoin Universe documentation platform</a> ·
+    <a href="https://github.com/bitcoinuniverseio/brc-20/security/advisories/new">Report a security issue</a></p>
+  </div>
+</footer>
+<script src="site.js" defer></script>
+</body>
+</html>

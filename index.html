@@ -1,62 +1,218 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="no-js">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Discover BRC-20, the inscription movement that turned compact text into fungible assets on Bitcoin.">
-  <meta name="theme-color" content="#071019">
-  <meta property="og:title" content="BRC-20 | Text became tokens">
-  <meta property="og:description" content="A ticker, a community, and a story written through Bitcoin inscriptions.">
-  <title>BRC-20 | Text became tokens</title>
-  <link rel="icon" href="https://docs.bitcoints.org/~gitbook/icon?size=small&amp;theme=dark">
-  <link rel="stylesheet" href="theme.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BRC-20 | Protocol documentation</title>
+<meta name="description" content="BRC-20 is a fungible token protocol whose entire state is a ledger replayed from JSON inscriptions on Bitcoin. Specification, guide, indexer reference, test vectors, and a payload validator.">
+<link rel="canonical" href="https://bitcoinuniverseio.github.io/brc-20/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="BRC-20 | Protocol documentation">
+<meta property="og:description" content="The fungible token ledger written in Bitcoin inscriptions: deploy, mint, transfer, first is valid. Full specification, indexer reference, test vectors, and validator.">
+<meta property="og:url" content="https://bitcoinuniverseio.github.io/brc-20/">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script>try{var t=localStorage.getItem('brc20-theme');if(t==='dark'||t==='light'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}</script>
+<link rel="stylesheet" href="ledger.css">
 </head>
 <body>
-  <header class="shell topbar">
-    <a class="brand" href="./"><img src="https://docs.bitcoints.org/~gitbook/icon?size=large&amp;theme=dark" alt="BRC-20 symbol"><strong>BRC-20</strong></a>
-    <nav class="nav" aria-label="Primary"><a href="#why">Why BRC-20</a><a href="#journey">The journey</a><a href="#control">Stay in control</a></nav>
-    <a class="top-action" href="https://inscribe.bitcoinuniverse.io">Create ↗</a>
-  </header>
-  <main>
-    <div class="shell hero">
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="masthead">
+  <div class="wrap">
+    <div class="masthead-row">
       <div>
-        <div class="eyebrow">The inscription movement on Bitcoin</div>
-        <h1>Text became tokens.<br><span class="blue">Bitcoin became a canvas.</span></h1>
-        <p class="lead">BRC-20 turned compact JSON inscriptions into a global fungible-asset movement: a ticker begins, a community takes part, and ownership moves through Bitcoin.</p>
-        <div class="tags"><span class="tag">Bitcoin inscriptions</span><span class="tag">Open participation</span><span class="tag">Transferable ownership</span></div>
-        <div class="hero-actions"><a class="button" href="https://inscribe.bitcoinuniverse.io">Create with Bitcoin Universe</a><a class="button ghost" href="#why">Discover the story</a></div>
+        <a class="site-name" href="./">BRC-20<span class="folio"> ¶</span></a>
+        <p class="site-sub">A fungible token ledger written in Bitcoin inscriptions</p>
       </div>
-      <div class="hero-art"><img src="https://docs.bitcoints.org/~gitbook/ogimage/ZLh40xiRuPtKDQjHgjUQ" alt="BRC-20 artwork" referrerpolicy="no-referrer"><div class="art-caption">BRC-20 artwork<br>credited to the original guide</div></div>
+      <div class="masthead-tools">
+        <div class="search" role="search">
+          <label class="sr-only" for="site-search">Search this site</label>
+          <input type="search" id="site-search" placeholder="Search ( / )" autocomplete="off" aria-expanded="false" aria-controls="search-results">
+          <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+        </div>
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false">Dark</button>
+      </div>
     </div>
-    <div class="rule"></div>
+    <nav class="site-nav" aria-label="Primary">
+      <ul>
+        <li><a href="./" aria-current="page">Overview</a></li>
+        <li><a href="spec.html">Specification</a></li>
+        <li><a href="guide.html">Guide</a></li>
+        <li><a href="reference.html">Reference</a></li>
+        <li><a href="vectors.html">Test vectors</a></li>
+        <li><a href="validator.html">Validator</a></li>
+        <li><a href="changelog.html">Changelog</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
 
-    <section id="why"><div class="shell">
-      <div class="section-heading"><div><div class="eyebrow">Three on-chain moments</div><h2>A tiny inscription.<br>A massive cultural spark.</h2></div><p>BRC-20 gives fungible assets a simple rhythm built around deploy, mint, and transfer. The inscriptions are compact; the communities and histories they create can be enormous.</p></div>
-      <div class="columns">
-        <article class="panel card"><div class="overline">01 / DEPLOY</div><h3>A ticker is born</h3><p>Deploy gives the asset its identity, maximum supply, optional mint limit, and precision.</p></article>
-        <article class="panel card"><div class="overline">02 / MINT</div><h3>The community joins</h3><p>Mint inscriptions bring units into the balance of their first valid owner.</p></article>
-        <article class="panel card"><div class="overline">03 / TRANSFER</div><h3>Ownership moves</h3><p>A transferable inscription carries its amount to the first recipient it reaches on-chain.</p></article>
-      </div>
-    </div></section>
+<main id="main">
+  <div class="wrap">
+    <p class="kicker">Protocol dossier</p>
+    <h1>BRC-20</h1>
+    <p class="lede">BRC-20 is a fungible token protocol carried inside Ordinals inscriptions on Bitcoin.
+    Every operation is a small JSON text object: <code>deploy</code> opens the book for a ticker,
+    <code>mint</code> credits units, and <code>transfer</code> moves them in two phases.
+    Bitcoin consensus never checks any of it. The token state is an off-chain ledger that
+    indexers reconstruct by replaying every inscription in block order under one shared rulebook.</p>
 
-    <section id="journey"><div class="shell">
-      <div class="section-heading"><div><div class="eyebrow">The holder journey</div><h2>Discover. Participate. Carry it forward.</h2></div><p>Every BRC-20 begins as text and grows through people. A compatible wallet keeps the inscription and its balance story connected from the first mint to the next owner.</p></div>
-      <div class="flow">
-        <article><b>01</b><h3>Discover</h3><p>Explore the ticker, supply, mint limit, and community.</p></article>
-        <article><b>02</b><h3>Participate</h3><p>Mint through an inscription and confirm where it will land.</p></article>
-        <article><b>03</b><h3>Hold</h3><p>Keep inscriptions protected in an Ordinals-compatible wallet.</p></article>
-        <article><b>04</b><h3>Transfer</h3><p>Move the transferable inscription to settle with its recipient.</p></article>
-      </div>
-    </div></section>
+    <div class="table-scroll">
+      <table class="factsheet">
+        <caption>Account summary</caption>
+        <tbody>
+          <tr><td>Protocol</td><td>BRC-20 (Universe registry id <code>brc20</code>)</td></tr>
+          <tr><td>Kind</td><td>Fungible token, balance ledger with a hybrid inscription carrier</td></tr>
+          <tr><td>Chain / network</td><td>Bitcoin mainnet</td></tr>
+          <tr><td>Carrier</td><td>Ordinals inscriptions, JSON payload (<code>text/plain</code> or <code>application/json</code>)</td></tr>
+          <tr><td>Operations</td><td><code>deploy</code>, <code>mint</code>, <code>transfer</code></td></tr>
+          <tr><td>Ticker</td><td>4 UTF-8 bytes, case-insensitive; 5 bytes under the self-mint extension</td></tr>
+          <tr><td>Balance model</td><td>Overall = available + transferable, per address (scriptPubKey)</td></tr>
+          <tr><td>Conflict rule</td><td>First is valid: the earliest valid inscription wins</td></tr>
+          <tr><td>Origin</td><td>domo, 8 March 2023, published as an open experiment</td></tr>
+          <tr><td>Rulebook</td><td>Layer1 Foundation indexing rules; OPI reference implementation</td></tr>
+          <tr><td>Lifecycle</td><td>Stable (live on mainnet since 2023)</td></tr>
+          <tr><td>This document</td><td>Spec version 1.0.0, verified 2026-09-01</td></tr>
+        </tbody>
+      </table>
+    </div>
 
-    <section id="control"><div class="shell">
-      <div class="section-heading"><div><div class="eyebrow">Your keys, your moment</div><h2>Know what moves before you sign.</h2></div><p>BRC-20 balances depend on how inscriptions are interpreted and moved. A normal-looking Bitcoin transaction can still change the token outcome.</p></div>
-      <div class="callout"><strong>Keep it clear.</strong> Check the ticker, amount, available balance, inscription destination, recipient, and miner fee in an Ordinals-compatible wallet. A transfer is complete only after the transferable inscription reaches its intended recipient.</div>
-      <div class="source-list" style="margin-top:16px"><a class="source" href="https://inscribe.bitcoinuniverse.io"><span>Create with Bitcoin Universe</span><small>OPEN ↗</small></a><a class="source" href="https://docs.bitcoints.org/brc-20"><span>Visit the original BRC-20 guide</span><small>OPEN ↗</small></a></div>
-    </div></section>
+    <h2 id="what">What BRC-20 is</h2>
+    <p>An inscription is arbitrary content committed into a Bitcoin transaction witness and
+    tracked to a single satoshi under the Ordinals numbering rules. BRC-20 uses that channel to
+    publish bookkeeping instructions. The protocol defines nothing except the payload format and
+    the rules for replaying payloads into balances. There are no smart contracts, no native
+    consensus changes, and no on-chain balance records.</p>
+    <p>That design has a sharp consequence: <strong>the ledger lives in the indexer</strong>.
+    Two indexers that follow the same rules over the same blocks arrive at the same balances,
+    which is why the shared indexing rulebook, first published by domo and now maintained by the
+    Layer1 Foundation, matters as much as the payload format itself.</p>
 
-    <section><div class="shell"><div class="provenance"><img src="https://docs.bitcoints.org/~gitbook/icon?size=large&amp;theme=dark" alt="BRC-20 symbol"><div><strong>Celebrating the source.</strong> The icon, hero artwork, and blue visual cues are credited to the <a href="https://docs.bitcoints.org/brc-20">original BRC-20 documentation</a>.</div></div></div></section>
-  </main>
-  <footer class="footer"><div class="shell">BRC-20, presented by <a href="https://github.com/bitcoinuniverse">Bitcoin Universe</a>. Review every Bitcoin transaction before signing.</div></footer>
+    <figure>
+      <svg class="diagram" viewBox="0 0 680 250" role="img" aria-labelledby="lifecycle-title lifecycle-desc">
+        <title id="lifecycle-title">BRC-20 lifecycle as ledger postings</title>
+        <desc id="lifecycle-desc">Four steps on one ruled ledger line. Deploy opens the account book for a ticker. Mint credits units to the first owner. Inscribing a transfer moves an amount from the available column to the transferable column. The first spend of that transfer inscription settles it with one of three outcomes: to a recipient, back to self, or spent as fee. Self and fee restore the sender's available balance.</desc>
+        <line class="d-double" x1="20" y1="40" x2="660" y2="40"/>
+        <text class="d-label" x="20" y="28">The life of a ticker, in postings</text>
+        <g>
+          <rect class="d-box" x="20" y="60" width="140" height="64"/>
+          <text class="d-head" x="32" y="84">deploy</text>
+          <text class="d-label" x="32" y="104">opens the book</text>
+          <rect class="d-box" x="190" y="60" width="140" height="64"/>
+          <text class="d-head" x="202" y="84">mint</text>
+          <text class="d-label" x="202" y="104">credit available</text>
+          <rect class="d-box" x="360" y="60" width="140" height="64"/>
+          <text class="d-head" x="372" y="84">transfer</text>
+          <text class="d-label" x="372" y="104">inscribe: reserve</text>
+          <rect class="d-box" x="530" y="60" width="130" height="64"/>
+          <text class="d-head" x="542" y="84">first spend</text>
+          <text class="d-label" x="542" y="104">settles it</text>
+        </g>
+        <g class="d-arrow">
+          <line x1="160" y1="92" x2="186" y2="92"/>
+          <line x1="330" y1="92" x2="356" y2="92"/>
+          <line x1="500" y1="92" x2="526" y2="92"/>
+        </g>
+        <g class="d-arrowhead">
+          <path d="M186 92 l-7 -4 v8 z"/>
+          <path d="M356 92 l-7 -4 v8 z"/>
+          <path d="M526 92 l-7 -4 v8 z"/>
+        </g>
+        <g class="d-arrow">
+          <path d="M595 124 v22"/>
+        </g>
+        <path class="d-arrowhead" d="M595 150 l-4 -7 h8 z"/>
+        <line class="d-rule-soft" x1="20" y1="164" x2="660" y2="164"/>
+        <text class="d-credit" x="360" y="188">to recipient: debit sender, credit recipient</text>
+        <text x="360" y="210">to self: amount returns to available</text>
+        <text class="d-debit" x="360" y="232">as fee: consumed, availability restored</text>
+        <text class="d-label" x="20" y="188">Outcomes of the</text>
+        <text class="d-label" x="20" y="206">first spend</text>
+      </svg>
+      <figcaption>The whole protocol is four postings. Everything else is bookkeeping discipline.</figcaption>
+    </figure>
+
+    <h2 id="who">Who this site is for</h2>
+    <dl>
+      <dt>Holders and traders</dt>
+      <dd>Read the <a href="guide.html">guide</a> to understand what a mint or transfer actually
+      does before signing, and why a normal-looking Bitcoin transaction can move token balances.</dd>
+      <dt>Application developers</dt>
+      <dd>Read the <a href="spec.html">specification</a> for the exact payload rules and the
+      <a href="vectors.html">test vectors</a> to check a parser. Paste payloads into the
+      <a href="validator.html">validator</a> while developing.</dd>
+      <dt>Indexer operators</dt>
+      <dd>Read the <a href="reference.html">reference</a> for confirmation, mempool, and reorg
+      semantics, plus the implementation checklist.</dd>
+    </dl>
+
+    <h2 id="entry-points">Entry points</h2>
+    <div class="table-scroll">
+      <table>
+        <caption>Table of contents</caption>
+        <thead><tr><th scope="col">Page</th><th scope="col">Contents</th></tr></thead>
+        <tbody>
+          <tr><td><a href="spec.html">Specification</a></td><td>Normative payload format, numbered validity rules R1 to R24, state transitions, invalid conditions</td></tr>
+          <tr><td><a href="guide.html">Guide</a></td><td>Plain-language walkthrough, worked deploy, mint, and transfer examples, Bitcoin Universe support matrix</td></tr>
+          <tr><td><a href="reference.html">Reference</a></td><td>Terminology, indexer semantics (confirmation, mempool, reorg), fees, limitations, security, checklist</td></tr>
+          <tr><td><a href="vectors.html">Test vectors</a></td><td>Valid and invalid payloads with expected outcomes, plus ledger state vectors</td></tr>
+          <tr><td><a href="validator.html">Validator</a></td><td>Paste inscription JSON, get every check explained, entirely client-side</td></tr>
+          <tr><td><a href="changelog.html">Changelog</a></td><td>Version history of this documentation</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="universe">BRC-20 in Bitcoin Universe</h2>
+    <p>Bitcoin Universe indexes and supports BRC-20 as an upstream-originated protocol.
+    In the Universe protocol registry it is a hybrid-carrier token protocol with
+    inscribe support for all three operations. Current, code-verified support:</p>
+    <ul>
+      <li><strong>Inscribe</strong>: create <code>deploy</code>, <code>mint</code>, and <code>transfer</code> inscriptions.</li>
+      <li><strong>Wallet</strong>: view, send, and receive BRC-20 inscriptions.</li>
+      <li><strong>Marketplace</strong>: listing, delisting, buying, and settlement are executed
+      through the UniSat Marketplace Open API integration; order authority and confirmation policy
+      are delegated to the provider. Protocol-native offers are not supported.</li>
+      <li><strong>Token explorer</strong>: a Universe-operated BRC-20 read model serves confirmed
+      token, holder, and supply state. Its published coverage is partial: confirmed history is
+      indexed, but there is no exhaustive BRC-20 mempool feed.</li>
+    </ul>
+    <p>Universe-specific indexing decisions are marked as such throughout this site; see the
+    <a href="spec.html#universe-notes">Universe notes</a> in the specification.</p>
+
+    <h2 id="provenance">Provenance and attribution</h2>
+    <p>BRC-20 was created by the pseudonymous builder <strong>domo</strong> on 8 March 2023 and
+    released as a public experiment with an explicit warning that the tokens would be worthless.
+    The ecosystem adopted it anyway, at scale. This site documents the protocol honestly as an
+    upstream creation: Bitcoin Universe did not originate BRC-20 and does not control its rules.</p>
+    <ul>
+      <li><a href="https://docs.bitcoints.org/brc-20" rel="external">The original BRC-20 documentation</a>, domo's specification of record.</li>
+      <li><a href="https://layer1.gitbook.io/layer1-foundation/protocols/brc-20/indexing" rel="external">Layer1 Foundation indexing rules</a>, the maintained indexing rulebook.</li>
+      <li><a href="https://github.com/bestinslot-xyz/OPI" rel="external">OPI</a>, the open reference indexer implementation.</li>
+    </ul>
+    <p>See <a href="https://github.com/bitcoinuniverseio/brc-20/blob/main/ATTRIBUTION.md">ATTRIBUTION.md</a> for full credits.</p>
+
+    <h2 id="security">Security reporting</h2>
+    <p>Report vulnerabilities in this documentation or in Bitcoin Universe BRC-20 handling privately via
+    <a href="https://github.com/bitcoinuniverseio/brc-20/security/advisories/new">GitHub private vulnerability reporting</a>.
+    Do not open public issues for security problems. Details are in
+    <a href="https://github.com/bitcoinuniverseio/brc-20/blob/main/SECURITY.md">SECURITY.md</a>.</p>
+  </div>
+</main>
+
+<footer class="colophon">
+  <div class="wrap">
+    <dl>
+      <dt>Owning repository</dt><dd><a href="https://github.com/bitcoinuniverseio/brc-20">bitcoinuniverseio/brc-20</a></dd>
+      <dt>Source path</dt><dd><code>/index.html</code></dd>
+      <dt>Spec version</dt><dd>1.0.0</dd>
+      <dt>Lifecycle</dt><dd>Stable</dd>
+      <dt>Chain / network</dt><dd>Bitcoin mainnet</dd>
+      <dt>Last verified</dt><dd>2026-09-01</dd>
+    </dl>
+    <p><a href="https://github.com/bitcoinuniverseio/brc-20/edit/main/index.html">Edit this page on GitHub</a> ·
+    Part of the <a href="https://docs.bitcoinuniverse.io">Bitcoin Universe documentation platform</a> ·
+    <a href="https://github.com/bitcoinuniverseio/brc-20/security/advisories/new">Report a security issue</a></p>
+  </div>
+</footer>
+<script src="site.js" defer></script>
 </body>
 </html>

@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Changelog | BRC-20</title>
+<meta name="description" content="Version history of the BRC-20 protocol documentation site, and the protocol milestones it documents.">
+<link rel="canonical" href="https://bitcoinuniverseio.github.io/brc-20/changelog.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="BRC-20 documentation changelog">
+<meta property="og:description" content="Version history of this documentation and the protocol milestones it covers.">
+<meta property="og:url" content="https://bitcoinuniverseio.github.io/brc-20/changelog.html">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script>try{var t=localStorage.getItem('brc20-theme');if(t==='dark'||t==='light'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}</script>
+<link rel="stylesheet" href="ledger.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="masthead">
+  <div class="wrap">
+    <div class="masthead-row">
+      <div>
+        <a class="site-name" href="./">BRC-20<span class="folio"> ¶</span></a>
+        <p class="site-sub">A fungible token ledger written in Bitcoin inscriptions</p>
+      </div>
+      <div class="masthead-tools">
+        <div class="search" role="search">
+          <label class="sr-only" for="site-search">Search this site</label>
+          <input type="search" id="site-search" placeholder="Search ( / )" autocomplete="off" aria-expanded="false" aria-controls="search-results">
+          <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+        </div>
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false">Dark</button>
+      </div>
+    </div>
+    <nav class="site-nav" aria-label="Primary">
+      <ul>
+        <li><a href="./">Overview</a></li>
+        <li><a href="spec.html">Specification</a></li>
+        <li><a href="guide.html">Guide</a></li>
+        <li><a href="reference.html">Reference</a></li>
+        <li><a href="vectors.html">Test vectors</a></li>
+        <li><a href="validator.html">Validator</a></li>
+        <li><a href="changelog.html" aria-current="page">Changelog</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap">
+    <p class="kicker">Document history</p>
+    <h1>Changelog</h1>
+    <p class="lede">Version history of this documentation. The BRC-20 protocol itself is
+    maintained upstream; protocol milestones are listed separately below for context.</p>
+
+    <h2 id="doc-history">Documentation versions</h2>
+
+    <h3 id="v1-0-0">1.0.0 · 2026-09-01</h3>
+    <p>First complete documentation release. The site was previously a single narrative page; this
+    version rebuilds it as a full protocol dossier.</p>
+    <ul>
+      <li>Added the normative <a href="spec.html">specification</a>: payload format, deploy, mint
+      and transfer field tables, and validity rules R1 to R24 with individually linkable anchors.</li>
+      <li>Added the <a href="guide.html">guide</a> with worked deploy, mint, and two-phase transfer
+      examples, and a support matrix limited to capabilities verified in Bitcoin Universe code.</li>
+      <li>Added the <a href="reference.html">reference</a>: terminology, confirmation, mempool and
+      reorg semantics, the cursed inscriptions caveat, fee and size considerations, limitations,
+      security considerations, and a 16-point implementation checklist.</li>
+      <li>Added <a href="vectors.html">test vectors</a>: 6 valid and 14 invalid payload vectors,
+      plus 5 ledger state vectors covering first-is-valid, the mint remainder rule, the three
+      first-spend outcomes, permanent voiding, and reorg reversal.</li>
+      <li>Added the client-side <a href="validator.html">payload validator</a>.</li>
+      <li>Added local search, an accessible ledger-typographic design in light and dark themes,
+      <code>llms.txt</code>, <code>sitemap.xml</code>, <code>robots.txt</code>, a helpful 404 page,
+      and a <code>docs.manifest.json</code> for the documentation platform.</li>
+      <li>Replaced remotely hosted images and icons with self-contained assets, so the site loads
+      no third-party resources.</li>
+      <li>Restated BRC-20's origin with domo explicitly, and marked every Bitcoin Universe
+      indexing decision as Universe-specific rather than protocol rule.</li>
+    </ul>
+
+    <h3 id="v0-1-0">0.1.0 · 2026-08-12</h3>
+    <p>Initial single-page site: a narrative introduction to deploy, mint, and transfer, with
+    visual credit to the original BRC-20 documentation. The factual content of that page
+    (the three operations, the two-phase transfer, and the pre-signing checks) is carried forward
+    into this release.</p>
+
+    <h2 id="protocol-history">Protocol milestones</h2>
+    <p>Context for readers, not a record of changes to this document.</p>
+    <div class="table-scroll">
+      <table>
+        <caption>Upstream protocol history</caption>
+        <thead><tr><th scope="col">Date</th><th scope="col">Milestone</th></tr></thead>
+        <tbody>
+          <tr><td>2023-03-08</td><td>domo publishes the BRC-20 experiment and inscribes the first deploy, <code>ordi</code>, with an explicit warning that the tokens would be worthless.</td></tr>
+          <tr><td>2023</td><td>Wide ecosystem adoption; indexers converge on a shared reading of the rules, with the two-phase transfer and first-is-valid as the load-bearing behaviors.</td></tr>
+          <tr><td>2023 onward</td><td>The indexing rules move to maintained publication by the Layer1 Foundation; OPI becomes the open reference implementation.</td></tr>
+          <tr><td>Later</td><td>The self-issuance extension admits 5-byte tickers deployed with <code>"self_mint":"true"</code>.</td></tr>
+          <tr><td>Later</td><td>Programmable extensions are proposed on top of the classic operations. They are out of scope for this specification and are not represented in the Bitcoin Universe read model.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>For the authoritative upstream record see the
+    <a href="https://docs.bitcoints.org/brc-20" rel="external">original documentation</a> and the
+    <a href="https://layer1.gitbook.io/layer1-foundation/protocols/brc-20/indexing" rel="external">Layer1 Foundation indexing rules</a>.</p>
+
+    <h2 id="versioning">Versioning policy</h2>
+    <ul>
+      <li><strong>Major</strong>: a change to a numbered rule's meaning, or a restructuring that
+      breaks existing anchors.</li>
+      <li><strong>Minor</strong>: new pages, new rules, or new vectors that do not change existing
+      rule meanings.</li>
+      <li><strong>Patch</strong>: corrections, clarifications, and link fixes.</li>
+    </ul>
+    <p>Rule numbers R1 to R24 are stable identifiers. A rule that is withdrawn keeps its number
+    and is marked withdrawn rather than being reused.</p>
+  </div>
+</main>
+
+<footer class="colophon">
+  <div class="wrap">
+    <dl>
+      <dt>Owning repository</dt><dd><a href="https://github.com/bitcoinuniverseio/brc-20">bitcoinuniverseio/brc-20</a></dd>
+      <dt>Source path</dt><dd><code>/changelog.html</code></dd>
+      <dt>Spec version</dt><dd>1.0.0</dd>
+      <dt>Lifecycle</dt><dd>Stable</dd>
+      <dt>Chain / network</dt><dd>Bitcoin mainnet</dd>
+      <dt>Last verified</dt><dd>2026-09-01</dd>
+    </dl>
+    <p><a href="https://github.com/bitcoinuniverseio/brc-20/edit/main/changelog.html">Edit this page on GitHub</a> ·
+    Part of the <a href="https://docs.bitcoinuniverse.io">Bitcoin Universe documentation platform</a> ·
+    <a href="https://github.com/bitcoinuniverseio/brc-20/security/advisories/new">Report a security issue</a></p>
+  </div>
+</footer>
+<script src="site.js" defer></script>
+</body>
+</html>

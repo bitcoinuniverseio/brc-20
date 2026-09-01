@@ -1,0 +1,330 @@
+{
+  "site": "BRC-20 protocol documentation",
+  "base": "https://bitcoinuniverseio.github.io/brc-20/",
+  "specVersion": "1.0.0",
+  "generated": "2026-09-01",
+  "entries": [
+    {
+      "page": "Overview",
+      "title": "What BRC-20 is",
+      "href": "index.html#what",
+      "text": "A fungible token protocol carried in Ordinals inscriptions. Bitcoin consensus validates none of it; the ledger is a replay of inscriptions by indexers.",
+      "aliases": ["brc20", "brc 20", "bcr-20", "brc-20 protocol", "fungible token", "inscription token"]
+    },
+    {
+      "page": "Overview",
+      "title": "Account summary fact sheet",
+      "href": "index.html",
+      "text": "Bitcoin mainnet, operations deploy mint transfer, 4-byte ticker, available and transferable balances, first is valid, originated by domo in March 2023.",
+      "aliases": ["fact sheet", "summary", "chain", "network", "lifecycle", "domo"]
+    },
+    {
+      "page": "Overview",
+      "title": "BRC-20 in Bitcoin Universe",
+      "href": "index.html#universe",
+      "text": "Inscribe supports deploy, mint and transfer. Wallet supports view, send and receive. Marketplace execution runs through the UniSat Marketplace Open API. Token explorer coverage is partial.",
+      "aliases": ["universe support", "unisat", "marketplace", "wallet", "inscribe", "token explorer"]
+    },
+    {
+      "page": "Overview",
+      "title": "Provenance and attribution",
+      "href": "index.html#provenance",
+      "text": "BRC-20 was created by domo on 8 March 2023 and released as a public experiment. Layer1 Foundation maintains the indexing rules; OPI is the reference implementation.",
+      "aliases": ["domo", "origin", "attribution", "credit", "layer1", "opi", "history"]
+    },
+    {
+      "page": "Specification",
+      "title": "Carrier and encoding",
+      "href": "spec.html#carrier",
+      "text": "One UTF-8 JSON object inscribed as text/plain or application/json in an ord envelope. Every protocol value is a JSON string.",
+      "aliases": ["json", "encoding", "content type", "text/plain", "application/json", "envelope", "witness"]
+    },
+    {
+      "page": "Specification",
+      "title": "Identifiers: ticker, inscription ID, address",
+      "href": "spec.html#identifiers",
+      "text": "Ticker is exactly 4 UTF-8 bytes, compared case-insensitively. Balance identity is the output script holding the inscribed satoshi.",
+      "aliases": ["tick", "ticker", "4 bytes", "case insensitive", "inscription id", "scriptpubkey", "address"]
+    },
+    {
+      "page": "Specification",
+      "title": "deploy fields",
+      "href": "spec.html#op-deploy",
+      "text": "p, op, tick and max are required; lim, dec and self_mint are optional. max is the immutable maximum supply, lim the per-mint limit, dec the divisibility from 0 to 18.",
+      "aliases": ["deploy", "max", "lim", "dec", "decimals", "supply", "limit", "self_mint"]
+    },
+    {
+      "page": "Specification",
+      "title": "mint fields",
+      "href": "spec.html#op-mint",
+      "text": "p, op, tick and amt are required. amt must be positive, at most lim, with decimals fitting dec.",
+      "aliases": ["mint", "amt", "amount", "minting"]
+    },
+    {
+      "page": "Specification",
+      "title": "transfer fields",
+      "href": "spec.html#op-transfer",
+      "text": "p, op, tick and amt are required. amt must not exceed the available balance at confirmation.",
+      "aliases": ["transfer", "amt", "send", "sending"]
+    },
+    {
+      "page": "Specification",
+      "title": "R3: every value must be a JSON string",
+      "href": "spec.html#r3",
+      "text": "A JSON number, boolean or null in any protocol field makes the operation invalid. Unquoted max is the classic mistake.",
+      "aliases": ["r3", "string", "number", "quoted", "unquoted", "common mistake"]
+    },
+    {
+      "page": "Specification",
+      "title": "R7: ticker byte length",
+      "href": "spec.html#r7",
+      "text": "tick must be exactly 4 UTF-8 bytes, or 5 bytes for a self-mint deploy. The limit counts bytes, not characters.",
+      "aliases": ["r7", "tick length", "4 bytes", "5 bytes", "emoji ticker", "self mint"]
+    },
+    {
+      "page": "Specification",
+      "title": "R10: first is valid",
+      "href": "spec.html#r10",
+      "text": "The first valid confirmed deploy of a ticker owns it. Later deploys of the same ticker are ignored and deploy economics are immutable.",
+      "aliases": ["r10", "first is valid", "first valid", "duplicate deploy", "squatting", "immutable"]
+    },
+    {
+      "page": "Specification",
+      "title": "R11: amount grammar and decimals",
+      "href": "spec.html#r11",
+      "text": "Base-10 only, no sign, no exponent, no leading zeros, no separators. Fractional digits after trimming trailing zeros must not exceed dec.",
+      "aliases": ["r11", "amount grammar", "decimals", "leading zeros", "precision", "rounding"]
+    },
+    {
+      "page": "Specification",
+      "title": "R14: the mint remainder rule",
+      "href": "spec.html#r14",
+      "text": "A mint that crosses the maximum supply is credited only the remaining amount. Once supply is exhausted every later mint is invalid.",
+      "aliases": ["r14", "remainder", "last mint", "mint out", "partial mint", "overflow"]
+    },
+    {
+      "page": "Specification",
+      "title": "R16 to R21: two-phase transfer rules",
+      "href": "spec.html#rules-transfer",
+      "text": "Inscribing reserves the amount from available to transferable. The inscription is one-use: its first spend settles it to a recipient, back to self, or as fee.",
+      "aliases": ["r16", "r17", "r18", "r19", "r20", "r21", "two phase", "one use", "first spend", "available", "transferable"]
+    },
+    {
+      "page": "Specification",
+      "title": "R24: cursed inscriptions",
+      "href": "spec.html#r24",
+      "text": "Inscriptions assigned negative numbers under the Ordinals rules are not valid BRC-20 operations.",
+      "aliases": ["r24", "cursed", "cursed inscriptions", "negative inscription number"]
+    },
+    {
+      "page": "Specification",
+      "title": "State transitions",
+      "href": "spec.html#state",
+      "text": "Overall balance equals available plus transferable. Mint credits available; inscribing a transfer reclassifies available as transferable; the first spend settles it.",
+      "aliases": ["state", "balance model", "double entry", "postings", "ledger"]
+    },
+    {
+      "page": "Specification",
+      "title": "Invalid conditions",
+      "href": "spec.html#invalid",
+      "text": "Content that is not JSON or lacks the brc-20 protocol tag is not a BRC-20 inscription. Everything else that breaks a rule is a recognized but ineffective operation.",
+      "aliases": ["invalid", "errors", "rejected", "failure"]
+    },
+    {
+      "page": "Specification",
+      "title": "Extensions: self-mint and programmable",
+      "href": "spec.html#extensions",
+      "text": "Deploys with self_mint true may claim 5-byte tickers and only the deployer may mint them. Programmable extensions are out of scope.",
+      "aliases": ["self_mint", "self mint", "5 byte", "brc2.0", "brc20 programmable", "extensions"]
+    },
+    {
+      "page": "Specification",
+      "title": "Universe indexing decisions",
+      "href": "spec.html#universe-notes",
+      "text": "Atomic integer arithmetic, transactional invariant enforcement, lowercased ticker identity with preserved display casing, partial coverage, classic operations only.",
+      "aliases": ["universe notes", "indexing decisions", "atomic", "invariants", "coverage"]
+    },
+    {
+      "page": "Guide",
+      "title": "The mental model",
+      "href": "guide.html#mental-model",
+      "text": "Nothing validates at signing time, order decides ownership, and moving a satoshi can move a balance.",
+      "aliases": ["mental model", "how it works", "beginner", "explanation"]
+    },
+    {
+      "page": "Guide",
+      "title": "Deploying a ticker",
+      "href": "guide.html#deploy",
+      "text": "Worked deploy example for ordi with max 21000000 and lim 1000. Deployers get no premine and economics can never be changed.",
+      "aliases": ["deploy example", "ordi", "premine", "launch a token", "create token"]
+    },
+    {
+      "page": "Guide",
+      "title": "Minting",
+      "href": "guide.html#mint",
+      "text": "Worked mint example and the four checks an indexer applies, including the remainder rule on the last mint.",
+      "aliases": ["mint example", "how to mint", "mint out", "mint race"]
+    },
+    {
+      "page": "Guide",
+      "title": "The two-phase transfer",
+      "href": "guide.html#two-phase",
+      "text": "Sending BRC-20 takes two transactions. Phase one reserves the amount; phase two spends the inscription and settles it. Worked example sending 100 ordi from Alice to Bob.",
+      "aliases": ["how to send", "transfer example", "two transactions", "phase one", "phase two", "settlement"]
+    },
+    {
+      "page": "Guide",
+      "title": "How balances get lost",
+      "href": "guide.html#three-outcomes",
+      "text": "A wallet unaware of inscriptions can spend a transfer inscription as change or fee, settling it against whoever receives it.",
+      "aliases": ["lost tokens", "accidental spend", "swept", "consolidation", "fee spend", "safety"]
+    },
+    {
+      "page": "Guide",
+      "title": "Bitcoin Universe support matrix",
+      "href": "guide.html#support",
+      "text": "Inscribe deploy, mint and transfer; wallet view, send and receive; marketplace listing and buying through UniSat; offers not supported; token explorer coverage partial.",
+      "aliases": ["support matrix", "wallet support", "marketplace support", "unisat", "offers"]
+    },
+    {
+      "page": "Reference",
+      "title": "Terminology",
+      "href": "reference.html#terminology",
+      "text": "Definitions of inscription, reveal transaction, ticker, available, transferable and overall balance, transfer inscription, atomic amount, checkpoint, cursed inscription.",
+      "aliases": ["glossary", "terminology", "definitions", "terms"]
+    },
+    {
+      "page": "Reference",
+      "title": "Confirmation semantics",
+      "href": "reference.html#confirmation",
+      "text": "Validity is decided at confirmation against the confirmed ledger. Same-block operations apply in transaction order. A void transfer inscription never revives.",
+      "aliases": ["confirmation", "confirmations", "depth", "finality", "settled"]
+    },
+    {
+      "page": "Reference",
+      "title": "Mempool semantics",
+      "href": "reference.html#mempool",
+      "text": "Unconfirmed operations are not protocol state and must never satisfy a precondition. Universe publishes partial coverage because there is no exhaustive BRC-20 mempool feed.",
+      "aliases": ["mempool", "pending", "unconfirmed", "rbf", "replacement"]
+    },
+    {
+      "page": "Reference",
+      "title": "Reorg semantics",
+      "href": "reference.html#reorg",
+      "text": "State after a reorg must equal a clean replay of the new chain. Reversal must be complete, dependencies must unwind together, and reorgs crossing the finalized height are refused.",
+      "aliases": ["reorg", "reorganization", "rollback", "reversal", "invalidation", "finalized height"]
+    },
+    {
+      "page": "Reference",
+      "title": "The cursed inscriptions caveat",
+      "href": "reference.html#cursed",
+      "text": "Which inscriptions are cursed depends on the ord version, so an Ordinals upgrade can change historical BRC-20 answers. Pin the version and reindex.",
+      "aliases": ["cursed", "ord version", "reindex", "historical divergence"]
+    },
+    {
+      "page": "Reference",
+      "title": "Amounts and arithmetic",
+      "href": "reference.html#arithmetic",
+      "text": "Scale to integers at dec and never leave integer arithmetic. Reject values above uint64 maximum 18446744073709551615 and use wider types for aggregates.",
+      "aliases": ["arithmetic", "uint64", "integer", "floating point", "precision", "atomic amount"]
+    },
+    {
+      "page": "Reference",
+      "title": "Fee and size considerations",
+      "href": "reference.html#fees",
+      "text": "A payload is 60 to 80 witness bytes. Every operation costs a commit and reveal; a transfer takes three transactions end to end. Invalid operations cost the same as valid ones.",
+      "aliases": ["fees", "cost", "size", "commit reveal", "dust", "546"]
+    },
+    {
+      "page": "Reference",
+      "title": "Limitations",
+      "href": "reference.html#limitations",
+      "text": "No consensus enforcement, possible indexer divergence, no atomic swaps, no protocol-level offers, ticker squatting, irreversible economics.",
+      "aliases": ["limitations", "drawbacks", "risks", "divergence"]
+    },
+    {
+      "page": "Reference",
+      "title": "Security considerations",
+      "href": "reference.html#security",
+      "text": "Accidental spends of transfer inscriptions, ticker impersonation, indexer trust, marketplace listing evidence, reorg exposure, defensive parsing.",
+      "aliases": ["security", "threats", "attacks", "scam", "impersonation", "custody"]
+    },
+    {
+      "page": "Reference",
+      "title": "Implementation checklist",
+      "href": "reference.html#checklist",
+      "text": "Sixteen steps from pinning the Ordinals version through strict parsing, integer arithmetic, two transfer events, reorg reversal, and verification against test vectors.",
+      "aliases": ["checklist", "implementation", "build an indexer", "indexer", "how to index"]
+    },
+    {
+      "page": "Test vectors",
+      "title": "Valid payload vectors",
+      "href": "vectors.html#payload-valid",
+      "text": "Six valid payloads: classic deploy, deploy with decimals, mint, transfer, self-mint 5-byte deploy, and a formatted payload with unknown keys.",
+      "aliases": ["valid vectors", "examples", "sample payloads", "conformance"]
+    },
+    {
+      "page": "Test vectors",
+      "title": "Invalid payload vectors",
+      "href": "vectors.html#payload-invalid",
+      "text": "Fourteen invalid payloads: numeric fields, wrong protocol tag, uppercase op, wrong ticker length, dec above 18, lim above max, zero amount, excess decimals, uint64 overflow, leading zeros, missing amt, malformed JSON, array payload.",
+      "aliases": ["invalid vectors", "errors", "negative tests", "edge cases"]
+    },
+    {
+      "page": "Test vectors",
+      "title": "Ledger vector: first is valid",
+      "href": "vectors.html#l1",
+      "text": "A duplicate deploy of the same ticker in a later block is ignored and mints apply against the first deploy's limits.",
+      "aliases": ["l1", "duplicate deploy", "first is valid vector"]
+    },
+    {
+      "page": "Test vectors",
+      "title": "Ledger vector: the mint remainder rule",
+      "href": "vectors.html#l2",
+      "text": "The mint that crosses maximum supply is credited only the remainder, not rejected and not credited in full.",
+      "aliases": ["l2", "remainder vector", "mint out vector"]
+    },
+    {
+      "page": "Test vectors",
+      "title": "Ledger vector: two-phase transfer outcomes",
+      "href": "vectors.html#l3",
+      "text": "Postings for recipient, self and fee spends from the same starting balance, and the inert second spend.",
+      "aliases": ["l3", "transfer vector", "self transfer", "fee transfer"]
+    },
+    {
+      "page": "Test vectors",
+      "title": "Ledger vector: reorg reversal",
+      "href": "vectors.html#l5",
+      "text": "Orphaned blocks are reversed completely and the replacement chain is replayed, producing state identical to a clean replay.",
+      "aliases": ["l5", "reorg vector", "reversal vector", "rollback test"]
+    },
+    {
+      "page": "Validator",
+      "title": "Inscription payload validator",
+      "href": "validator.html",
+      "text": "Paste a BRC-20 inscription JSON payload and see every check explained with its rule. Runs entirely in your browser; nothing is transmitted or stored.",
+      "aliases": ["validator", "check", "verify", "lint", "parser", "tool", "decoder"]
+    },
+    {
+      "page": "Validator",
+      "title": "What the validator cannot check",
+      "href": "validator.html#what-it-cannot",
+      "text": "Chain-dependent conditions: whether the ticker is deployed, the deployed limit and decimals, remaining supply, available balance, and the inscription envelope.",
+      "aliases": ["limits of validator", "chain state", "cannot check"]
+    },
+    {
+      "page": "Changelog",
+      "title": "Documentation versions",
+      "href": "changelog.html#doc-history",
+      "text": "Version 1.0.0 rebuilt the site as a full protocol dossier on 2026-09-01, replacing the 0.1.0 single-page introduction.",
+      "aliases": ["changelog", "history", "versions", "releases"]
+    },
+    {
+      "page": "Changelog",
+      "title": "Protocol milestones",
+      "href": "changelog.html#protocol-history",
+      "text": "domo publishes BRC-20 and the ordi deploy on 8 March 2023; the Layer1 Foundation maintains the indexing rules; the self-issuance extension admits 5-byte tickers.",
+      "aliases": ["milestones", "protocol history", "timeline", "2023"]
+    }
+  ]
+}

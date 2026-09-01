@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Guide | BRC-20</title>
+<meta name="description" content="A plain-language BRC-20 walkthrough: what deploy, mint, and transfer actually do, worked transaction examples, why balances move when an inscription is spent, and what Bitcoin Universe supports.">
+<link rel="canonical" href="https://bitcoinuniverseio.github.io/brc-20/guide.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="BRC-20 guide">
+<meta property="og:description" content="How deploy, mint, and two-phase transfer work in practice, with worked examples and a verified support matrix.">
+<meta property="og:url" content="https://bitcoinuniverseio.github.io/brc-20/guide.html">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script>try{var t=localStorage.getItem('brc20-theme');if(t==='dark'||t==='light'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}</script>
+<link rel="stylesheet" href="ledger.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="masthead">
+  <div class="wrap">
+    <div class="masthead-row">
+      <div>
+        <a class="site-name" href="./">BRC-20<span class="folio"> ¶</span></a>
+        <p class="site-sub">A fungible token ledger written in Bitcoin inscriptions</p>
+      </div>
+      <div class="masthead-tools">
+        <div class="search" role="search">
+          <label class="sr-only" for="site-search">Search this site</label>
+          <input type="search" id="site-search" placeholder="Search ( / )" autocomplete="off" aria-expanded="false" aria-controls="search-results">
+          <ul id="search-results" class="search-results" aria-label="Search results"></ul>
+        </div>
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false">Dark</button>
+      </div>
+    </div>
+    <nav class="site-nav" aria-label="Primary">
+      <ul>
+        <li><a href="./">Overview</a></li>
+        <li><a href="spec.html">Specification</a></li>
+        <li><a href="guide.html" aria-current="page">Guide</a></li>
+        <li><a href="reference.html">Reference</a></li>
+        <li><a href="vectors.html">Test vectors</a></li>
+        <li><a href="validator.html">Validator</a></li>
+        <li><a href="changelog.html">Changelog</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <div class="wrap">
+    <p class="kicker">Working guide</p>
+    <h1>How BRC-20 works in practice</h1>
+    <p class="lede">The specification states the rules. This page walks through what actually
+    happens on chain and in your wallet, in order, with the numbers written out. If you read one
+    section, read <a href="#two-phase">the two-phase transfer</a>: it is where almost every
+    surprise and almost every loss comes from.</p>
+
+    <h2 id="mental-model">The mental model</h2>
+    <p>Picture a paper ledger. Every page is one ticker. Every line is one posting, in block
+    order. Anyone with the same blocks and the same rulebook writes the same ledger.</p>
+    <p>Bitcoin does not keep this ledger. Bitcoin only stores the inscriptions, in order, forever.
+    The ledger is what an <em>indexer</em> gets when it reads those inscriptions and applies the
+    rules. Your balance is not a record anyone can edit; it is the result of a replay.</p>
+    <p>Three consequences follow, and they explain most BRC-20 behavior:</p>
+    <ol>
+      <li><strong>Nothing validates at signing time.</strong> Bitcoin will happily confirm an
+      inscription that says <code>{"p":"brc-20","op":"mint","tick":"zzzz","amt":"999"}</code> for
+      a ticker that does not exist. You pay the fee, the transaction confirms, and the ledger
+      records nothing. Invalid operations cost real money and produce nothing.</li>
+      <li><strong>Order decides ownership.</strong> When two people inscribe the same new ticker,
+      the earlier confirmed inscription owns it and the later one is simply ignored
+      (<a href="spec.html#r10">R10</a>). There is no tie-break beyond block height and position
+      in the block.</li>
+      <li><strong>Moving a satoshi can move a balance.</strong> A transfer inscription is a bearer
+      instrument. Spending it, even accidentally, settles it.</li>
+    </ol>
+
+    <h2 id="deploy">Deploying a ticker</h2>
+    <p>A deploy opens the ledger page and fixes the economics permanently. There is no upgrade,
+    no admin key, no way to change <code>max</code>, <code>lim</code>, or <code>dec</code> later.</p>
+    <div class="posting">
+      <h3>Worked example</h3>
+      <p>Inscribe this content as <code>text/plain;charset=utf-8</code>:</p>
+      <pre><code>{"p":"brc-20","op":"deploy","tick":"ordi","max":"21000000","lim":"1000"}</code></pre>
+      <p>Reading it field by field:</p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th scope="col">Field</th><th scope="col">Value</th><th scope="col">Effect</th></tr></thead>
+          <tbody>
+            <tr><td><code>tick</code></td><td>ordi</td><td>Claims the ticker, case-insensitively. <code>ORDI</code> is the same asset.</td></tr>
+            <tr><td><code>max</code></td><td class="amount">21 000 000</td><td>Total units that can ever be minted. Immutable.</td></tr>
+            <tr><td><code>lim</code></td><td class="amount">1 000</td><td>Most that any single mint may take. 21 000 mints minimum to exhaust supply.</td></tr>
+            <tr><td><code>dec</code></td><td>omitted</td><td>Defaults to 18 decimal places.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The deploy does not credit anyone anything. Deployers get no premine and no special
+      rights: a deployer who wants tokens has to mint like everyone else. The one exception is a
+      self-mint deploy (<a href="spec.html#extensions">5-byte tickers</a>), where only the
+      deployer may mint.</p>
+    </div>
+    <div class="warn">
+      <span class="note-label">Before you deploy</span>
+      <p>Omitting <code>lim</code> sets the per-mint limit to <code>max</code>, so the very first
+      mint can take the entire supply. Setting <code>dec</code> to <code>"0"</code> makes the
+      token indivisible forever. Neither can be corrected afterwards.</p>
+    </div>
+
+    <h2 id="mint">Minting</h2>
+    <p>A mint credits units to whoever first owns the mint inscription, which in practice is the
+    address that receives the inscribed satoshi in the reveal transaction.</p>
+    <div class="posting">
+      <h3>Worked example</h3>
+      <pre><code>{"p":"brc-20","op":"mint","tick":"ordi","amt":"1000"}</code></pre>
+      <p>At confirmation the indexer checks, in order:</p>
+      <ol>
+        <li>Is <code>ordi</code> deployed in an earlier block, or earlier in this block? If not, nothing happens (<a href="spec.html#r12">R12</a>).</li>
+        <li>Is <code>amt</code> at most <code>lim</code> (1 000)? <code>"1001"</code> would be invalid outright, not clipped (<a href="spec.html#r13">R13</a>).</li>
+        <li>Do the decimals fit <code>dec</code>? (<a href="spec.html#r11">R11</a>)</li>
+        <li>Is there supply left? If only 400 remain, this mint credits 400, not 1 000 (<a href="spec.html#r14">R14</a>).</li>
+      </ol>
+      <p>Passing all four, the receiving address's <strong>available</strong> balance for
+      <code>ordi</code> increases by the credited amount and minted supply rises by the same
+      amount.</p>
+    </div>
+    <div class="note">
+      <span class="note-label">The remainder rule</span>
+      <p>The last mint of a ticker is the protocol's only partial application. If 400 units remain
+      and you mint <code>"1000"</code>, you receive 400 and the ticker is fully minted. Every
+      later mint, including one in the same block after yours, is worth nothing. This is why
+      mint-out races end with a block full of paid-for, empty inscriptions.</p>
+    </div>
+
+    <h2 id="two-phase">The two-phase transfer</h2>
+    <p>Sending BRC-20 takes two Bitcoin transactions, and the balance moves on the second one.</p>
+
+    <figure>
+      <svg class="diagram" viewBox="0 0 680 300" role="img" aria-labelledby="phases-title phases-desc">
+        <title id="phases-title">The two transactions of a BRC-20 transfer</title>
+        <desc id="phases-desc">Transaction one inscribes the transfer payload; at confirmation the amount moves from the sender's available column to their transferable column and the sender still holds everything. Transaction two spends that inscription to the recipient; the amount leaves the sender's transferable column and lands in the recipient's available column. A caution note states that between the two transactions the balance has not moved, and that spending the inscription to anyone settles it.</desc>
+        <line class="d-double" x1="20" y1="30" x2="660" y2="30"/>
+        <text class="d-label" x="20" y="20">Two transactions, one settlement</text>
+
+        <rect class="d-box" x="20" y="52" width="290" height="96"/>
+        <text class="d-head" x="34" y="76">Transaction 1 · inscribe</text>
+        <text x="34" y="100">writes {"op":"transfer","amt":"100"}</text>
+        <text class="d-label" x="34" y="122">on confirmation:</text>
+        <text class="d-debit" x="34" y="140">available -100</text>
+        <text class="d-credit" x="180" y="140">transferable +100</text>
+
+        <rect class="d-box" x="370" y="52" width="290" height="96"/>
+        <text class="d-head" x="384" y="76">Transaction 2 · spend</text>
+        <text x="384" y="100">sends that inscription onward</text>
+        <text class="d-label" x="384" y="122">on confirmation:</text>
+        <text class="d-debit" x="384" y="140">transferable -100</text>
+        <text class="d-credit" x="530" y="140">recipient +100</text>
+
+        <path class="d-arrow" d="M310 100 h52"/>
+        <path class="d-arrowhead" d="M362 100 l-7 -4 v8 z"/>
+
+        <line class="d-rule" x1="20" y1="176" x2="660" y2="176"/>
+        <text class="d-label" x="20" y="200">Between the two</text>
+        <text x="20" y="222">Nothing has moved. The sender still holds the full overall balance,</text>
+        <text x="20" y="244">with 100 of it reserved and no longer spendable by another transfer.</text>
+        <text class="d-debit" x="20" y="274">Whoever the inscription's first spend reaches, receives the 100.</text>
+      </svg>
+      <figcaption>Phase one reserves. Phase two settles. Only the first spend counts.</figcaption>
+    </figure>
+
+    <div class="posting">
+      <h3>Worked example: sending 100 ordi</h3>
+      <p>Alice holds 1 000 <code>ordi</code>, all available. She sends 100 to Bob.</p>
+      <p><strong>Phase one.</strong> Alice inscribes:</p>
+      <pre><code>{"p":"brc-20","op":"transfer","tick":"ordi","amt":"100"}</code></pre>
+      <p>She inscribes it to her own address. On confirmation the indexer checks that 100 is at
+      most her available balance (<a href="spec.html#r16">R16</a>) and posts:</p>
+      <div class="table-scroll">
+        <table>
+          <caption>Alice after phase one</caption>
+          <thead><tr><th scope="col">Column</th><th scope="col" class="amount">Before</th><th scope="col" class="amount">Change</th><th scope="col" class="amount">After</th></tr></thead>
+          <tbody>
+            <tr><td>available</td><td class="amount">1000</td><td class="amount debit">-100</td><td class="amount">900</td></tr>
+            <tr><td>transferable</td><td class="amount">0</td><td class="amount credit">+100</td><td class="amount">100</td></tr>
+            <tr><td>overall</td><td class="amount">1000</td><td class="amount">0</td><td class="amount">1000</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Phase two.</strong> Alice spends the transfer inscription's satoshi to Bob's
+      address in an ordinary Bitcoin transaction. On confirmation:</p>
+      <div class="table-scroll">
+        <table>
+          <caption>After phase two</caption>
+          <thead><tr><th scope="col">Account</th><th scope="col" class="amount">Available</th><th scope="col" class="amount">Transferable</th><th scope="col" class="amount">Overall</th></tr></thead>
+          <tbody>
+            <tr><td>Alice</td><td class="amount">900</td><td class="amount">0</td><td class="amount">900</td></tr>
+            <tr><td>Bob</td><td class="amount">100</td><td class="amount">0</td><td class="amount">100</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Bob receives it as available balance immediately. He does not need to do anything, and
+      the spent transfer inscription is now inert: moving it again has no BRC-20 effect
+      (<a href="spec.html#r18">R18</a>).</p>
+    </div>
+
+    <h3 id="three-outcomes">Three ways a transfer inscription ends</h3>
+    <div class="table-scroll">
+      <table>
+        <caption>First-spend outcomes</caption>
+        <thead><tr><th scope="col">Where the inscription goes</th><th scope="col">Result</th><th scope="col">Rule</th></tr></thead>
+        <tbody>
+          <tr><td>To another address</td><td>Sender debited, recipient credited. The intended case.</td><td><a href="spec.html#r19">R19</a></td></tr>
+          <tr><td>Back to the sender</td><td>Reservation released: the amount returns to available. A safe way to cancel.</td><td><a href="spec.html#r20">R20</a></td></tr>
+          <tr><td>Spent as transaction fee</td><td>The inscription is consumed and the amount returns to the sender's available balance. Nobody is credited.</td><td><a href="spec.html#r21">R21</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="warn">
+      <span class="note-label">How balances get lost</span>
+      <p>A wallet that does not understand inscriptions treats the transfer inscription's satoshi
+      as ordinary change. If it spends that satoshi to pay a fee, or sweeps it into a consolidation
+      transaction, the first-spend rule fires against whoever ends up holding it. Use a wallet
+      that tracks inscriptions and never sweep an inscription-bearing UTXO with a general-purpose
+      Bitcoin wallet.</p>
+    </div>
+
+    <h2 id="checklist">Before you sign</h2>
+    <ul>
+      <li><strong>Ticker</strong>: exactly the 4 bytes you intend. Lookalike tickers using
+      different Unicode characters are a known scam pattern, and the site's
+      <a href="validator.html">validator</a> reports the byte length of what you paste.</li>
+      <li><strong>Amount</strong>: quoted as a string, within <code>lim</code> for a mint, within
+      your available balance for a transfer.</li>
+      <li><strong>Destination</strong>: where the inscription lands, which is not always where
+      your wallet's "recipient" field points.</li>
+      <li><strong>Available versus overall</strong>: only available balance can back a new
+      transfer inscription.</li>
+      <li><strong>Fee</strong>: an invalid operation still costs the full inscription fee.</li>
+    </ul>
+
+    <h2 id="support">Bitcoin Universe support</h2>
+    <p>The matrix below reflects what is wired in the Bitcoin Universe codebase as of
+    2026-09-01. Capabilities not listed are not currently supported.</p>
+    <div class="table-scroll">
+      <table>
+        <caption>Verified BRC-20 support in Universe products</caption>
+        <thead><tr><th scope="col">Surface</th><th scope="col">Supported</th><th scope="col">Authority and limits</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Inscribe</td>
+            <td><code>deploy</code>, <code>mint</code>, <code>transfer</code></td>
+            <td>Builds and inscribes the payloads described on this site.</td>
+          </tr>
+          <tr>
+            <td>Wallet</td>
+            <td>view, send, receive</td>
+            <td>Inscription-aware handling of BRC-20 balances and transfer inscriptions.</td>
+          </tr>
+          <tr>
+            <td>Marketplace</td>
+            <td>view, discover, view collection, view activity, list, update listing, unlist, buy, settle</td>
+            <td>Executed through the UniSat Marketplace Open API. Order authority, ownership
+            checks, and confirmation policy are the provider's; settlement uses that workflow plus
+            a wallet-signed PSBT. Universe keeps no local rollback state for those orders.</td>
+          </tr>
+          <tr>
+            <td>Marketplace offers</td>
+            <td>Not supported</td>
+            <td>Protocol-native BRC-20 offers are deliberately refused pending a reviewed
+            non-custodial offer protocol.</td>
+          </tr>
+          <tr>
+            <td>Token explorer</td>
+            <td>Token, holder, and supply reads</td>
+            <td>Universe-operated BRC-20 read model over confirmed operations. Published coverage
+            is <code>partial</code>: no exhaustive mempool feed with a stable pending lifecycle.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Two things are worth stating plainly. First, Universe marketplace execution for BRC-20 is
+    provider-driven rather than settled against a Universe-operated order authority. Second, a
+    Universe-internal BRC-20 marketplace authority exists in the indexer but ships default-off
+    with published release blockers, so it backs no user-facing claim here.</p>
+
+    <h2 id="next">Next</h2>
+    <ul>
+      <li>Check a payload in the <a href="validator.html">validator</a>.</li>
+      <li>Read the exact rules in the <a href="spec.html">specification</a>.</li>
+      <li>Test a parser against the <a href="vectors.html">test vectors</a>.</li>
+      <li>Run an indexer? Start with <a href="reference.html#confirmation">indexer semantics</a>.</li>
+    </ul>
+  </div>
+</main>
+
+<footer class="colophon">
+  <div class="wrap">
+    <dl>
+      <dt>Owning repository</dt><dd><a href="https://github.com/bitcoinuniverseio/brc-20">bitcoinuniverseio/brc-20</a></dd>
+      <dt>Source path</dt><dd><code>/guide.html</code></dd>
+      <dt>Spec version</dt><dd>1.0.0</dd>
+      <dt>Lifecycle</dt><dd>Stable</dd>
+      <dt>Chain / network</dt><dd>Bitcoin mainnet</dd>
+      <dt>Last verified</dt><dd>2026-09-01</dd>
+    </dl>
+    <p><a href="https://github.com/bitcoinuniverseio/brc-20/edit/main/guide.html">Edit this page on GitHub</a> ·
+    Part of the <a href="https://docs.bitcoinuniverse.io">Bitcoin Universe documentation platform</a> ·
+    <a href="https://github.com/bitcoinuniverseio/brc-20/security/advisories/new">Report a security issue</a></p>
+  </div>
+</footer>
+<script src="site.js" defer></script>
+</body>
+</html>
