@@ -6,6 +6,6 @@ A successful scan establishes snapshot coverage. It does not establish agreement
 
 Recovery requires the same surviving snapshot keeper. Missing or altered checkpoint files and an expired keeper cause refusal; the scanner never silently substitutes a new snapshot. The raw current-balance cache is diagnostic, while effective balances come from authoritative history.
 
-As of 8 October 2026, private Signet tests passed complete coverage, large monetary values, bounded chunks, crash recovery under the same snapshot, altered-checkpoint rejection and expired-snapshot rejection. A production read-only audit is prepared for review but has not been launched. Existing owned source indexing continues.
+As of 8 October 2026, private Signet tests passed complete coverage, large monetary values, bounded chunks, crash recovery under the same snapshot, altered-checkpoint rejection and expired-snapshot rejection. Managed production read-only attempts preserved explicit startup and row-budget refusals. A corrected bounded-source audit is awaiting review, with no financial readiness claim. Existing owned source indexing continues.
 
 This scanner uses a new digest format. Older V1 reference or failed V3 audit digests cannot be treated as equivalent V4 commitments without a verified bridge.
