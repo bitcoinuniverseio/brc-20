@@ -129,7 +129,8 @@ Input publication, complete historical financial agreement and native release ar
 
 A qualified continuity frontend preserves the same owned tip service and shared
 connection limits while reserving input transport capacity for new sessions.
-Existing sessions remain unchanged; its versioned boot update remains under review.
+Existing sessions remain unchanged; its versioned startup policy preserves the
+qualified route and healthy fallback without restarting current applications.
 
 Private checkpoint diagnostics and ordered financial prefix validation have advanced. These improvements preserve the validation rules and do not yet establish native historical readiness.
 
