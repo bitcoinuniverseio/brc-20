@@ -134,5 +134,10 @@ focused synthetic tests and awaits private runtime qualification.
 Traffic currently uses the existing healthy transport after a memory-bound issue
 was isolated. The replacement streams large replies with bounded temporary storage;
 historical data and reader admission remain separate qualification gates.
+The memory-safe shared route and qualified genesis publication are nowlive;
+startup guards preserve fallback without restarting existing services. Full
+historical/native validation remains pending. Genesis coverage is not full indexing.
+Reader restart authority refresh is a guarded source candidate, preserving shared
+RPC availability while refusing stale or unqualified publication identity.
 
 Private checkpoint diagnostics and ordered financial prefix validation have advanced. These improvements preserve the validation rules and do not yet establish native historical readiness.
