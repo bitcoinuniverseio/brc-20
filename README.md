@@ -1,5 +1,20 @@
 # BRC-20
 
+## Universe decoder availability
+
+The native Universe decoder is currently awaiting qualified owned historical
+inputs after a programmable trace discrepancy. It explicitly reports unready;
+process liveness or retained data is not proof of complete indexed history.
+Consumers must respect readiness and checkpoint coverage before treating data
+as fresh. Existing datasets and validation guards remain intact. See the
+[public indexer documentation](https://github.com/bitcoinuniverseio/docs-brc20)
+for availability guidance and the protocol guide below for BRC-20 rules.
+
+Universe indexer inputs use owned blockchain infrastructure. External blockchain
+status polling is removed from the Node read model; retained external-status
+checkpoints cannot establish readiness. This does not change the protocol rules
+or claim the native decoder's historical reconciliation is complete.
+
 Protocol documentation for BRC-20, the fungible token protocol carried inside Ordinals
 inscriptions on Bitcoin.
 
