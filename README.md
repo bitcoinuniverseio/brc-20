@@ -99,6 +99,10 @@ search-index.json   docs.manifest.json  llms.txt        sitemap.xml  robots.txt
 
 ## Contributing and reporting
 
+Native recovery is preparing independently validated owned historical inputs.
+Passing build fixtures does not establish a running, fresh indexer. The native
+service remains unready until its input history and validation qualify.
+
 - Corrections and improvements: [CONTRIBUTING.md](CONTRIBUTING.md)
 - Questions and help: [SUPPORT.md](SUPPORT.md)
 - Security issues: [SECURITY.md](SECURITY.md). Use
