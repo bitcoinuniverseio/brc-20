@@ -127,6 +127,14 @@ The transport streams large replies through bounded temporary storage. Reader id
 
 Input publication, complete historical financial agreement and native release are distinct stages. Current input replay is valid work; financial/reference/native readiness remains separately held.
 
+A qualified continuity frontend preserves the same owned tip service and shared
+connection limits while reserving input transport capacity for new sessions.
+Existing sessions remain unchanged; its versioned startup policy preserves the
+qualified route and healthy fallback without restarting current applications.
+The common server's future-start metadata hook retains its latency fix without
+changing running source or credentials. A fixed synthetic Signet input ledger is
+prepared for paired tests; it does not establish execution or historical readiness.
+
 Private checkpoint diagnostics and ordered financial prefix validation have advanced. These improvements preserve the validation rules and do not yet establish native historical readiness.
 
 Complete historical financial validation now runs in bounded read-only batches. Representative checks passed, but full history validation and independent owned-input replay remain in progress. Native indexing stays unready until both complete.
