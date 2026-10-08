@@ -121,5 +121,5 @@ family rather than compete with live protocols. The controller source candidate
 preserves existing authentication and persistent clients, reserves node capacity,
 and exposes only qualified owned publications. Private staging passed, then a
 fresh idle-connection check safely refused handover. A tested stale-connection
-repair awaits refreshed staging; production routing, producer lifecycle and
-historical recovery admission remain pending.
+repair passed refreshed staging and shared routing handover. Producer lifecycle
+and historical recovery admission remain pending; no owned input reader is live.
