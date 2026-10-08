@@ -119,3 +119,15 @@ service remains unready until its input history and validation qualify.
 
 Part of the [Bitcoin Universe documentation platform](https://docs.bitcoinuniverse.io).
 Licensed under [MIT](LICENSE).
+# Shared recovery capacity
+
+The owned-input exporter and independent reference must share one bounded RPC
+family rather than compete with live protocols. The controller source candidate
+preserves existing authentication and persistent clients, reserves node capacity,
+and exposes only qualified owned publications. Private staging passed, then a
+fresh idle-connection check safely refused handover. A tested stale-connection
+repair passed refreshed staging and shared routing handover. Producer lifecycle
+and historical recovery admission remain pending; no owned input reader is live.
+Lifecycle source preparation reuses the same shared capacity for all consumers,
+with an interest-driven tip source and guarded reader admission. It has passed
+focused synthetic tests and awaits private runtime qualification.
