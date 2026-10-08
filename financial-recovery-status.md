@@ -7,3 +7,5 @@ Native financial indexing remains unready until independent historical validatio
 The source prevents external provider construction. Validation uses owned inputs and checks financial data, virtual-machine state, runtime identity, and durable checkpoints. Current-state and historical-state projections are labeled separately.
 
 See [the financial scanner](financial-scanner-v4.md) for the independent read-only comparison stage.
+
+Source review now distinguishes execution-duration diagnostics from chain timestamps. Its focused tests preserve all original evidence; this preparation does not change active validation or establish recovered history.
