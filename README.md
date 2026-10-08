@@ -14,8 +14,9 @@ Universe indexer inputs use owned blockchain infrastructure. External blockchain
 status polling is removed from the Node read model; retained external-status
 checkpoints cannot establish readiness. This does not change the protocol rules
 or claim the native decoder's historical reconciliation is complete.
-Build-only reference publication and trace-codec fixtures support recovery work;
-they do not replace independent historical replay or establish live readiness.
+Build-only publication and isolated trace/VM fixtures have passed. A distinct
+owned historical replay driver is in qualification. These checks do not replace
+independent historical reconciliation or establish live readiness.
 
 Protocol documentation for BRC-20, the fungible token protocol carried inside Ordinals
 inscriptions on Bitcoin.
