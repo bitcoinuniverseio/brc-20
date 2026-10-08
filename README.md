@@ -126,15 +126,15 @@ family rather than compete with live protocols. The controller source candidate
 preserves existing authentication and persistent clients, reserves node capacity,
 and exposes only qualified owned publications. Private staging passed, then a
 fresh idle-connection check safely refused handover. A tested stale-connection
-repair passed refreshed staging and shared routing handover. Producer lifecycle
-and historical recovery admission remain pending; no owned input reader is live.
+repair passed refreshed staging and shared routing handover. The owned input producer and passive reader are now live on indexers2; complete financial recovery remains held.
 Lifecycle source preparation reuses the same shared capacity for all consumers,
-with an interest-driven tip source and guarded reader admission. It has passed
-focused synthetic tests and awaits private runtime qualification.
-Traffic currently uses the existing healthy transport after a memory-bound issue
-was isolated. The replacement streams large replies with bounded temporary storage;
-historical data and reader admission remain separate qualification gates.
+with an interest-driven tip source and guarded reader admission. It passed focused tests and runtime qualification; one owned input writer and its passive reader are live. Financial validation remains held.
+Traffic now uses the qualified managed transport, which streams large replies through bounded temporary storage. Complete historical input and financial agreement remain separate qualification gates.
 
 Private checkpoint diagnostics and ordered financial prefix validation have advanced. These improvements preserve the validation rules and do not yet establish native historical readiness.
 
 Complete historical financial validation now runs in bounded read-only batches. Representative checks passed, but full history validation and independent owned-input replay remain in progress. Native indexing stays unready until both complete.
+
+## Owned input source
+
+The single input writer on indexers2 is active and its passive reader publishes a committed prefix. Financial/reference/native readiness remains separately held. See [owned input source](owned-input-source.md).
