@@ -131,3 +131,5 @@ and historical recovery admission remain pending; no owned input reader is live.
 Lifecycle source preparation reuses the same shared capacity for all consumers,
 with an interest-driven tip source and guarded reader admission. It has passed
 focused synthetic tests and awaits private runtime qualification.
+
+Private checkpoint diagnostics and ordered financial prefix validation have advanced. These improvements preserve the validation rules and do not yet establish native historical readiness.
