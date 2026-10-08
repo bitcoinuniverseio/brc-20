@@ -144,6 +144,10 @@ restarting live services. Separate frontend fairness improvement remains a teste
 source candidate; ongoing owned-input publication is distinct from financial
 history qualification.
 
+A source-only continuity frontend preserves the same owned tip service and shared
+connection limits while reserving input transport capacity. Its staging and boot
+handover plan is under review; existing production sessions remain unchanged.
+
 Private checkpoint diagnostics and ordered financial prefix validation have advanced. These improvements preserve the validation rules and do not yet establish native historical readiness.
 
 Complete historical financial validation now runs in bounded read-only batches. Representative checks passed, but full history validation and independent owned-input replay remain in progress. Native indexing stays unready until both complete.
