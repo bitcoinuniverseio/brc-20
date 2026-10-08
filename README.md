@@ -133,3 +133,5 @@ with an interest-driven tip source and guarded reader admission. It has passed
 focused synthetic tests and awaits private runtime qualification.
 
 Private checkpoint diagnostics and ordered financial prefix validation have advanced. These improvements preserve the validation rules and do not yet establish native historical readiness.
+
+Complete historical financial validation now runs in bounded read-only batches. Representative checks passed, but full history validation and independent owned-input replay remain in progress. Native indexing stays unready until both complete.
