@@ -137,8 +137,12 @@ historical data and reader admission remain separate qualification gates.
 The memory-safe shared route and qualified genesis publication are nowlive;
 startup guards preserve fallback without restarting existing services. Full
 historical/native validation remains pending. Genesis coverage is not full indexing.
-Reader restart authority refresh is a guarded source candidate, preserving shared
-RPC availability while refusing stale or unqualified publication identity.
+Reader restart authority refresh is installed as a metadata-only hook, preserving
+shared RPC availability while refusing stale or unqualified publication identity.
+Persistent shared replies now avoid a measured delayed-ACK latency penalty without
+restarting live services. Separate frontend fairness improvement remains a tested
+source candidate; ongoing owned-input publication is distinct from financial
+history qualification.
 
 Private checkpoint diagnostics and ordered financial prefix validation have advanced. These improvements preserve the validation rules and do not yet establish native historical readiness.
 
