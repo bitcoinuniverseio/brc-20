@@ -18,6 +18,11 @@ Build-only publication and isolated trace/VM fixtures have passed. A distinct
 owned historical replay driver compiles and awaits data qualification. These checks do not replace
 independent historical reconciliation or establish live readiness.
 
+Captured-engine Signet checks and complete private checkpoint checks have passed.
+The owned input producer/reader is built and statically validated, with its data
+admission still gated. Native decoding remains unready while independent owned
+history and financial/programmable prefix comparison are completed.
+
 Protocol documentation for BRC-20, the fungible token protocol carried inside Ordinals
 inscriptions on Bitcoin.
 
