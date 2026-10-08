@@ -127,9 +127,9 @@ The transport streams large replies through bounded temporary storage. Reader id
 
 Input publication, complete historical financial agreement and native release are distinct stages. Current input replay is valid work; financial/reference/native readiness remains separately held.
 
-A source-only continuity frontend preserves the same owned tip service and shared
-connection limits while reserving input transport capacity. Its staging and boot
-handover plan is under review; existing production sessions remain unchanged.
+A qualified continuity frontend preserves the same owned tip service and shared
+connection limits while reserving input transport capacity for new sessions.
+Existing sessions remain unchanged; its versioned boot update remains under review.
 
 Private checkpoint diagnostics and ordered financial prefix validation have advanced. These improvements preserve the validation rules and do not yet establish native historical readiness.
 
