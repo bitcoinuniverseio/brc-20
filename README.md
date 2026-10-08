@@ -134,6 +134,9 @@ qualified route and healthy fallback without restarting current applications.
 The common server's future-start metadata hook retains its latency fix without
 changing running source or credentials. A fixed synthetic Signet input ledger is
 prepared for paired tests; it does not establish execution or historical readiness.
+Its optional empty Signet continuation preserves the original prefix. Future Main
+reference review remains fail closed on missing coverage, incompatible commitments,
+unsafe resource demand or incomplete checkpoints; no automatic reset is allowed.
 
 Private checkpoint diagnostics and ordered financial prefix validation have advanced. These improvements preserve the validation rules and do not yet establish native historical readiness.
 
