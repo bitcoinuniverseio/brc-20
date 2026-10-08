@@ -141,3 +141,5 @@ Reader restart authority refresh is a guarded source candidate, preserving share
 RPC availability while refusing stale or unqualified publication identity.
 
 Private checkpoint diagnostics and ordered financial prefix validation have advanced. These improvements preserve the validation rules and do not yet establish native historical readiness.
+
+Complete historical financial validation now runs in bounded read-only batches. Representative checks passed, but full history validation and independent owned-input replay remain in progress. Native indexing stays unready until both complete.
