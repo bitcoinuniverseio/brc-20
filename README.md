@@ -121,28 +121,11 @@ Part of the [Bitcoin Universe documentation platform](https://docs.bitcoinuniver
 Licensed under [MIT](LICENSE).
 # Shared recovery capacity
 
-The owned-input exporter and independent reference must share one bounded RPC
-family rather than compete with live protocols. The controller source candidate
-preserves existing authentication and persistent clients, reserves node capacity,
-and exposes only qualified owned publications. Private staging passed, then a
-fresh idle-connection check safely refused handover. A tested stale-connection
-repair passed refreshed staging and shared routing handover. Producer lifecycle
-and historical recovery admission remain pending; no owned input reader is live.
-Lifecycle source preparation reuses the same shared capacity for all consumers,
-with an interest-driven tip source and guarded reader admission. It has passed
-focused synthetic tests and awaits private runtime qualification.
-Traffic currently uses the existing healthy transport after a memory-bound issue
-was isolated. The replacement streams large replies with bounded temporary storage;
-historical data and reader admission remain separate qualification gates.
-The memory-safe shared route and qualified genesis publication are nowlive;
-startup guards preserve fallback without restarting existing services. Full
-historical/native validation remains pending. Genesis coverage is not full indexing.
-Reader restart authority refresh is installed as a metadata-only hook, preserving
-shared RPC availability while refusing stale or unqualified publication identity.
-Persistent shared replies now avoid a measured delayed-ACK latency penalty without
-restarting live services. Separate frontend fairness improvement remains a tested
-source candidate; ongoing owned-input publication is distinct from financial
-history qualification.
+The single owned-input writer and its passive publication reader are live on indexers2. They reuse the existing owned Bitcoin Core and managed transport. Exporter and independent reference share one bounded RPC family, while the gateway reserves node headroom and retains existing authentication.
+
+The transport streams large replies through bounded temporary storage. Reader identity is refreshed after legitimate startup and fails closed when stale. Persistent replies avoid the measured delayed-ACK penalty without restarting live services. A separate frontend fairness improvement remains a tested source candidate.
+
+Input publication, complete historical financial agreement and native release are distinct stages. Current input replay is valid work; financial/reference/native readiness remains separately held.
 
 A source-only continuity frontend preserves the same owned tip service and shared
 connection limits while reserving input transport capacity. Its staging and boot
@@ -151,3 +134,7 @@ handover plan is under review; existing production sessions remain unchanged.
 Private checkpoint diagnostics and ordered financial prefix validation have advanced. These improvements preserve the validation rules and do not yet establish native historical readiness.
 
 Complete historical financial validation now runs in bounded read-only batches. Representative checks passed, but full history validation and independent owned-input replay remain in progress. Native indexing stays unready until both complete.
+
+## Owned input source
+
+The single input writer on indexers2 is active and its passive reader publishes a committed prefix. Financial/reference/native readiness remains separately held. See [owned input source](owned-input-source.md).
