@@ -119,5 +119,7 @@ Licensed under [MIT](LICENSE).
 The owned-input exporter and independent reference must share one bounded RPC
 family rather than compete with live protocols. The controller source candidate
 preserves existing authentication and persistent clients, reserves node capacity,
-and exposes only qualified owned publications. Source tests are complete; runtime
-handover, producer lifecycle and historical recovery admission remain pending.
+and exposes only qualified owned publications. Private staging passed, then a
+fresh idle-connection check safely refused handover. A tested stale-connection
+repair awaits refreshed staging; production routing, producer lifecycle and
+historical recovery admission remain pending.
