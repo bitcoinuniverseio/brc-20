@@ -7,3 +7,7 @@ tested without truncating those events.
 Financial production remains unavailable pending independent audit and recovery
 checks. The new validator has not been admitted to scan production history, and
 the private fixture's interrupted boundary remains preserved for review.
+
+The bounded validator passed actual private-database large-event and fresh
+numeric-type checks. Complete private financial and programmable state also
+matched independently. Financial release remains separate from those tests.
